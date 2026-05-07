@@ -1,0 +1,45 @@
+import { Button, StyleMetrics } from "std-widgets.slint";
+import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
+import { RightPanelState } from "../widgets/right_panel_states.slint";
+import { Histogram } from "../widgets/histogram.slint";
+
+export component RightPanel inherits SlidingPanel {
+    in-out property <RightPanelState> PanelState;
+    property <string> title;
+
+    side: PanelSide.Right;
+    panel-width: 750px;
+
+    VerticalLayout {
+        padding: StyleMetrics.layout-padding;
+        spacing: StyleMetrics.layout-spacing;
+
+        HorizontalLayout {
+            vertical-stretch: 0;
+            alignment: space-between;
+
+            Button {
+                text: "↩";
+
+                clicked => {
+                    root.close-panel();
+                }
+            }
+
+            Text {
+                text: title;
+            }
+
+            Button {
+                text: "🗙";
+
+                clicked => {
+                    PanelState = RightPanelState.None;
+                    root.close-panel();
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.Histogram: Histogram { }
+    }
+}

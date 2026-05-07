@@ -1,0 +1,10 @@
+struct ImageContainer {
+    label: string,
+    img: image,
+    color: bool,
+}
+
+export global ImageStore {
+    in-out property <[ImageContainer]> loaded-images: [];
+    in-out property <int> selected-image: -1;
+}

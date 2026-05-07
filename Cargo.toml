@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 opencv = "0.98.2"
 slint = "1.16.1"
+
+[build-dependencies]
+slint-build = "1.16.1"

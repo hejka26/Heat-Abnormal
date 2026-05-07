@@ -1,0 +1,105 @@
+import { Button, StyleMetrics } from "std-widgets.slint";
+import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
+import { RightPanelState } from "../widgets/right_panel_states.slint";
+import { RustAction } from "../global/rust_actions.slint";
+
+
+struct ButtonAction { right-menu: RightPanelState, rust-action: RustAction}
+struct SubMenuButton { label: string, action: ButtonAction}
+struct MenuButton { label: string, submenu: [SubMenuButton]}
+
+
+export component LeftPanel inherits SlidingPanel {
+    property <int> active_sub_menu: -1;
+    property <[MenuButton]> main-menu-items: [
+        {
+            label: "File",
+            submenu: [
+                { label: "Open", action: { } },
+                { label: "Save", action: { } },
+                { label: "Save As", action: { } },
+                { label: "Duplicate", action: { } }
+            ],
+        },
+        {
+            label: "Transform",
+            submenu: [],
+        },
+        {
+            label: "Analyze",
+            submenu: [{ label: "Histogram", action: { right-menu: RightPanelState.Histogram } }],
+        },
+        {
+            label: "Process",
+            submenu: [],
+        }
+    ];
+
+    callback set-right-menu(RightPanelState);
+
+    // Initialize SlidingPanel properties directly
+    side: PanelSide.Left;
+    panel-width: 220px;
+
+    VerticalLayout {
+        padding: StyleMetrics.layout-padding;
+        spacing: StyleMetrics.layout-spacing;
+        alignment: start;
+
+        HorizontalLayout {
+            vertical-stretch: 0;
+            alignment: space-between;
+            Button {
+                text: "🗙";
+
+                clicked => {
+                    root.close-panel()
+                }
+            }
+        }
+
+        for item[index] in root.main-menu-items: VerticalLayout {
+            spacing: StyleMetrics.layout-spacing;
+            //TODO: Make this look more like a submenu container while still sticking to styles :/
+            Button {
+                text: item.label;
+
+                clicked => {
+                    if item.submenu.length != 0 {
+                        if active_sub_menu == index {
+                            active_sub_menu = -1
+                        } else {
+                            active_sub_menu = index;
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                clip: true;
+                height: index == root.active_sub_menu ? submenu-layout.preferred-height : 0px;
+
+                animate height {
+                    duration: 300ms;
+                    easing: ease-in-out;
+                }
+
+                submenu-layout := VerticalLayout {
+                    padding-left: StyleMetrics.layout-padding;
+                    spacing: StyleMetrics.layout-spacing;
+
+                    for sub-item in item.submenu: Button {
+                        text: sub-item.label;
+
+                        clicked => {
+                            if sub-item.action.right-menu != RightPanelState.KeepState {
+                                set-right-menu(sub-item.action.right-menu);
+                                active-sub-menu = -1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

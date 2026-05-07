@@ -1,0 +1,44 @@
+import {
+    VerticalBox,
+    HorizontalBox,
+    Button,
+    Palette,
+    StyleMetrics,
+} from "std-widgets.slint";
+
+// 1. Define the sides
+export enum PanelSide { Left, Right }
+
+// 2. The Reusable Component
+export component SlidingPanel inherits Rectangle {
+    // Component Inputs (Arguments)
+    in property <bool> is-open: false;
+    in property <PanelSide> side: PanelSide.Left;
+    in property <length> panel-width: 250px;
+    in property <length> parent-width;
+
+    callback close-panel();
+
+    width: root.panel-width;
+
+    // 3. The Math for sliding from either side
+    x: root.side == PanelSide.Left ? 
+        // IF LEFT: Open = edge-gap, Closed = pushed off screen to the left
+        (root.is-open ? 0px : -panel-width) :
+        // IF RIGHT: Open = parent width minus panel width, Closed = pushed off screen to the right
+        (root.is-open ? parent-width - panel-width : parent-width);
+
+    animate x {
+        duration: 300ms;
+        easing: ease-in-out;
+    }
+
+    background: Palette.alternate-background;
+    border-width: 1px;
+    border-color: Palette.border;
+
+    drop-shadow-color: root.is-open ? #00000020 : transparent;
+    drop-shadow-blur: 15px;
+
+    @children
+}

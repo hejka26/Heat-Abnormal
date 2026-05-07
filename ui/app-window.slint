@@ -1,0 +1,128 @@
+import {
+    Button,
+    VerticalBox,
+    HorizontalBox,
+    Palette,
+    StyleMetrics,
+    ScrollView,
+    TabWidget,
+} from "std-widgets.slint";
+
+import { LeftPanel } from "./panels/left_panel.slint";
+
+import { RightPanelState } from "./widgets/right_panel_states.slint";
+import { RightPanel } from "panels/right_panel.slint";
+
+enum OpenPanel {
+    None,
+    Left,
+    Right,
+}
+
+struct ImageContainer {
+    label: string,
+    img: image,
+    color: bool,
+}
+
+export component MainWindow inherits Window {
+    title: "Heat Abnormal";
+    width: 900px;
+    height: 600px;
+    background: Palette.background;
+
+    property <OpenPanel> menu-open: OpenPanel.None;
+
+    property <RightPanelState> right-panel-view: RightPanelState.None;
+
+    property <[ImageContainer]> loaded-images: [];
+    property <int> selected-image: 0;
+
+    VerticalLayout {
+        padding: StyleMetrics.layout-padding;
+        spacing: StyleMetrics.layout-spacing;
+
+        HorizontalLayout {
+            alignment: LayoutAlignment.space-between;
+
+            // Grid Toggle Button
+            Button {
+                text: "☰";
+
+                clicked => {
+                    root.menu-open = OpenPanel.Left;
+                }
+            }
+
+            Text {
+                text: "Heat Abnormal";
+                font-size: 24px;
+                font-weight: FontWeight.semi-bold;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+
+            Button {
+                visible: root.right-panel-view != RightPanelState.None ? true : false;
+                text: "☰";
+
+                clicked => {
+                    root.menu-open = OpenPanel.Right;
+                }
+            }
+        }
+
+        // Image Display
+        Rectangle {
+            vertical-stretch: 1;
+            background: Palette.alternate-background;
+            border-radius: 8px;
+            clip: true;
+
+            if selected-image != -1: Image {
+                source: loaded-images[selected-image].img;
+                width: 100%;
+                height: 100%;
+                image-fit: contain;
+            }
+
+            // Placeholder before image is loaded
+            Text {
+                text: "Image Area";
+                color: #888;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        ScrollView {
+            height: 40px;
+            viewport-width: 300px;
+
+            // TODO: Make widget for selecting tabs and add it here...
+        }
+    }
+
+    LeftPanel {
+        is-open: root.menu-open == OpenPanel.Left ? true : false;
+
+        set-right-menu(state) => {
+            root.right-panel-view = state;
+            root.menu-open = OpenPanel.Right;
+        }
+
+        close-panel() => {
+            menu-open = OpenPanel.None
+        }
+    }
+
+    RightPanel {
+        is-open: root.menu-open == OpenPanel.Right ? true : false;
+        parent-width: root.width;
+        PanelState <=> root.right-panel-view;
+
+        close-panel() => {
+            menu-open = OpenPanel.None
+        }
+    }
+}
