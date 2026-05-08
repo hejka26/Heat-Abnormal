@@ -2,10 +2,16 @@ import { Button, StyleMetrics } from "std-widgets.slint";
 import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
 import { RightPanelState } from "../widgets/right_panel_states.slint";
 import { RustAction } from "../global/rust_actions.slint";
+import { RustActions } from "../global/event_bus.slint";
+import {
+    ImageStateReq,
+    ImageContainer,
+    ImageStore,
+} from "../global/image_data.slint";
 
 
 struct ButtonAction { right-menu: RightPanelState, rust-action: RustAction}
-struct SubMenuButton { label: string, action: ButtonAction}
+struct SubMenuButton { label: string, requirement: ImageStateReq, action: ButtonAction}
 struct MenuButton { label: string, submenu: [SubMenuButton]}
 
 
@@ -15,10 +21,10 @@ export component LeftPanel inherits SlidingPanel {
         {
             label: "File",
             submenu: [
-                { label: "Open", action: { } },
-                { label: "Save", action: { } },
-                { label: "Save As", action: { } },
-                { label: "Duplicate", action: { } }
+                { label: "Open", action: { rust-action: RustAction.OpenFile } },
+                { label: "Save", Requirement: ImageStateReq.Any, action: { } },
+                { label: "Save As", Requirement: ImageStateReq.Any, action: { } },
+                { label: "Duplicate", Requirement: ImageStateReq.Any, action: { } }
             ],
         },
         {
@@ -27,7 +33,13 @@ export component LeftPanel inherits SlidingPanel {
         },
         {
             label: "Analyze",
-            submenu: [{ label: "Histogram", action: { right-menu: RightPanelState.Histogram } }],
+            submenu: [
+                {
+                    label: "Histogram",
+                    requirement: ImageStateReq.Any,
+                    action: { right-menu: RightPanelState.Histogram }
+                }
+            ],
         },
         {
             label: "Process",
@@ -90,11 +102,14 @@ export component LeftPanel inherits SlidingPanel {
 
                     for sub-item in item.submenu: Button {
                         text: sub-item.label;
-
+                        enabled: ImageStore.is-requirement-met(sub-item.requirement);
                         clicked => {
                             if sub-item.action.right-menu != RightPanelState.KeepState {
                                 set-right-menu(sub-item.action.right-menu);
                                 active-sub-menu = -1;
+                            }
+                            if sub-item.action.rust-action == RustAction.OpenFile {
+                                RustActions.open-file();
                             }
                         }
                     }

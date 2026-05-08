@@ -1,10 +1,46 @@
-struct ImageContainer {
+export struct ImageContainer {
     label: string,
     img: image,
     color: bool,
 }
 
+export enum ImageStateReq {
+    None,
+    Any,
+    Gray,
+    Color,
+}
+
 export global ImageStore {
-    in-out property <[ImageContainer]> loaded-images: [];
+    in property <[ImageContainer]> loaded-images: [];
     in-out property <int> selected-image: -1;
+
+    public pure function is-requirement-met(req: ImageStateReq) -> bool {
+        // 1. None is always allowed
+        if (req == ImageStateReq.None) {
+            return true;
+        }
+        
+        // 2. Anything else requires a valid selection. 
+        // We can access selected-image directly because we are inside the global!
+        if (selected-image < 0) {
+            return false;
+        }
+        
+        // 3. Evaluate specific requirements safely
+        if (req == ImageStateReq.Any) {
+            return true;
+        }
+        
+        // Access loaded-images and selected-image directly
+        let is-color = loaded-images[selected-image].color;
+
+        if (req == ImageStateReq.Color) {
+            return is-color;
+        }
+        if (req == ImageStateReq.Gray) {
+            return !is-color;
+        }
+        return false;
+    }
 }
