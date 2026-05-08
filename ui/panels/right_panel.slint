@@ -1,3 +1,8 @@
+import {
+    RustActions,
+    GrayHistogramState,
+    RGBHistogramState,
+} from "../global/event_bus.slint";
 import { Button, StyleMetrics } from "std-widgets.slint";
 import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
 import { RightPanelState } from "../widgets/right_panel_states.slint";
@@ -38,8 +43,14 @@ export component RightPanel inherits SlidingPanel {
                     root.close-panel();
                 }
             }
-        }
 
-        if PanelState == RightPanelState.Histogram: Histogram { }
+            if PanelState == RightPanelState.Histogram: Histogram {
+                init() => {
+                    RustActions.calculate-gray-histogram()
+                }
+                data: GrayHistogramState.data;
+                max-value: GrayHistogramState.max-value;
+            }
+        }
     }
 }

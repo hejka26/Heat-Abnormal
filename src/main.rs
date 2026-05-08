@@ -27,6 +27,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    ui.global::<RustActions>().on_convert_color({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+
+        move || {
+            // Call the function we moved to actions.rs
+            ui_impl::actions::convert_color(&ui_handle, &images_model);
+        }
+    });
+
     ui.run()?;
     Ok(())
 }

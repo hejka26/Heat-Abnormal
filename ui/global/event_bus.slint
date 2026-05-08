@@ -1,3 +1,17 @@
+export global GrayHistogramState {
+    in property <[float]> data: [10, 25, 60, 90];
+    in property <float> max-value: 100;
+}
+
+export global RGBHistogramState {
+    in property <[[float]]> data: [[10, 25, 60, 90]];
+    in property <[float]> max-value: [100];
+}
+
+
 export global RustActions {
     callback open-file();
+    callback convert-color();
+    callback calculate-gray-histogram();
+    callback calculate-RGB-histogram();
 }

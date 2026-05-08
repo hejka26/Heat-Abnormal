@@ -51,3 +51,31 @@ pub fn open_file(ui_handle: &Weak<MainWindow>, images_model: &Rc<VecModel<ImageC
         ui.global::<ImageStore>().set_selected_image(new_index);
     }
 }
+
+pub fn convert_color(ui_handle: &Weak<MainWindow>, images_model: &Rc<VecModel<ImageContainer>>) {
+    let Some(ui) = ui_handle.upgrade() else {
+        return;
+    };
+
+    let selected_idx = ui.global::<ImageStore>().get_selected_image() as usize;
+
+    let Some(mut img) = images_model.row_data(selected_idx) else {
+        eprintln!("Couldn't retrieve img");
+        return;
+    };
+
+    let conversion_result = if img.color {
+        helper::slint_to_gray(&img.img).and_then(|mat| helper::gray_to_slint(&mat))
+    } else {
+        helper::slint_to_rgb(&img.img).and_then(|mat| helper::rgb_to_slint(&mat))
+    };
+
+    match conversion_result {
+        Ok(new_img) => {
+            img.img = new_img;
+            img.color = !img.color;
+            images_model.set_row_data(selected_idx, img);
+        }
+        Err(e) => eprintln!("{}", e),
+    }
+}

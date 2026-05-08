@@ -29,14 +29,20 @@ export component LeftPanel inherits SlidingPanel {
         },
         {
             label: "Transform",
-            submenu: [],
+            submenu: [
+                {
+                    label: "Convert Colorspace",
+                    requirement: ImageStateReq.Any,
+                    action: { rust-action: RustAction.ConvertColor }
+                }
+            ],
         },
         {
             label: "Analyze",
             submenu: [
                 {
                     label: "Histogram",
-                    requirement: ImageStateReq.Any,
+                    requirement: ImageStateReq.Gray,
                     action: { right-menu: RightPanelState.Histogram }
                 }
             ],
@@ -110,6 +116,9 @@ export component LeftPanel inherits SlidingPanel {
                             }
                             if sub-item.action.rust-action == RustAction.OpenFile {
                                 RustActions.open-file();
+                            }
+                            if sub-item.action.rust-action == RustAction.ConvertColor {
+                                RustActions.convert-color();
                             }
                         }
                     }

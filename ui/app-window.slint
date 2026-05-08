@@ -17,7 +17,7 @@ import { ImageContainer, ImageStore } from "global/image_data.slint";
 // FIX: Change 'import' to 'export' so Rust can see them
 export { ImageContainer, ImageStore } from "global/image_data.slint";
 // FIX: Export RustActions so main.rs can bind to its callbacks
-export { RustActions } from "global/event_bus.slint";
+export * from "global/event_bus.slint";
 
 enum OpenPanel {
     None,

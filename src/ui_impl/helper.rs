@@ -1,83 +1,72 @@
 use opencv::{
-    core::{CV_8UC3, Scalar},
+    core::{CV_8UC1, CV_8UC3, Scalar},
     imgproc,
     prelude::*,
 };
-use slint::{Image, Rgba8Pixel, SharedPixelBuffer};
+use slint::{Image, Rgb8Pixel, SharedPixelBuffer};
 
 pub fn bga_to_slint(mat: &Mat) -> Result<Image, String> {
-    let mut rgba_mat = Mat::default();
+    let mut rgb_mat = Mat::default();
     if let Err(e) = imgproc::cvt_color(
         &mat,
-        &mut rgba_mat,
-        imgproc::COLOR_BGR2RGBA,
+        &mut rgb_mat,
+        imgproc::COLOR_BGR2RGB,
         0,
         opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT,
     ) {
         return Err(format!("failed to convert color space: {}", e));
     }
 
-    let width = rgba_mat.cols() as u32;
-    let height = rgba_mat.rows() as u32;
+    let width = rgb_mat.cols() as u32;
+    let height = rgb_mat.rows() as u32;
 
-    let Ok(pixel_bytes) = rgba_mat.data_bytes() else {
+    let Ok(pixel_bytes) = rgb_mat.data_bytes() else {
         return Err("failed to read raw bytes from image matrix".to_string());
     };
 
-    Ok(Image::from_rgba8(
-        SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(pixel_bytes, width, height),
+    Ok(Image::from_rgb8(
+        SharedPixelBuffer::<Rgb8Pixel>::clone_from_slice(pixel_bytes, width, height),
     ))
 }
 
 pub fn rgb_to_slint(mat: &Mat) -> Result<Image, String> {
-    let mut rgba_mat = Mat::default();
-    if let Err(e) = imgproc::cvt_color(
-        &mat,
-        &mut rgba_mat,
-        imgproc::COLOR_RGB2RGBA,
-        0,
-        opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT,
-    ) {
-        return Err(format!("failed to convert color space: {}", e));
-    }
+    let width = mat.cols() as u32;
+    let height = mat.rows() as u32;
 
-    let width = rgba_mat.cols() as u32;
-    let height = rgba_mat.rows() as u32;
-
-    let Ok(pixel_bytes) = rgba_mat.data_bytes() else {
+    let Ok(pixel_bytes) = mat.data_bytes() else {
         return Err("failed to read raw bytes from image matrix".to_string());
     };
 
-    Ok(Image::from_rgba8(
-        SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(pixel_bytes, width, height),
+    Ok(Image::from_rgb8(
+        SharedPixelBuffer::<Rgb8Pixel>::clone_from_slice(pixel_bytes, width, height),
     ))
 }
 
 pub fn gray_to_slint(mat: &Mat) -> Result<Image, String> {
-    let mut rgba_mat = Mat::default();
+    let mut rgb_mat = Mat::default();
     if let Err(e) = imgproc::cvt_color(
         &mat,
-        &mut rgba_mat,
-        imgproc::COLOR_GRAY2RGBA,
+        &mut rgb_mat,
+        imgproc::COLOR_GRAY2RGB,
         0,
         opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT,
     ) {
         return Err(format!("failed to convert color space: {}", e));
     }
 
-    let width = rgba_mat.cols() as u32;
-    let height = rgba_mat.rows() as u32;
+    let width = rgb_mat.cols() as u32;
+    let height = rgb_mat.rows() as u32;
 
-    let Ok(pixel_bytes) = rgba_mat.data_bytes() else {
+    let Ok(pixel_bytes) = rgb_mat.data_bytes() else {
         return Err("failed to read raw bytes from image matrix".to_string());
     };
 
-    Ok(Image::from_rgba8(
-        SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(pixel_bytes, width, height),
+    Ok(Image::from_rgb8(
+        SharedPixelBuffer::<Rgb8Pixel>::clone_from_slice(pixel_bytes, width, height),
     ))
 }
 
-fn slint_to_rgb(img: &Image) -> Result<Mat, String> {
+pub fn slint_to_rgb(img: &Image) -> Result<Mat, String> {
     let Some(pixel_buffer) = img.to_rgb8() else {
         return Err("failed to convert to rgb buffer from image".to_string());
     };
@@ -101,7 +90,7 @@ fn slint_to_rgb(img: &Image) -> Result<Mat, String> {
     Ok(rgb_mat)
 }
 
-fn slint_to_gray(img: &Image) -> Result<Mat, String> {
+pub fn slint_to_gray(img: &Image) -> Result<Mat, String> {
     let Some(pixel_buffer) = img.to_rgb8() else {
         return Err("failed to convert to rgb buffer from image".to_string());
     };
