@@ -22,9 +22,9 @@ export component LeftPanel inherits SlidingPanel {
             label: "File",
             submenu: [
                 { label: "Open", action: { rust-action: RustAction.OpenFile } },
-                { label: "Save", Requirement: ImageStateReq.Any, action: { } },
-                { label: "Save As", Requirement: ImageStateReq.Any, action: { } },
-                { label: "Duplicate", Requirement: ImageStateReq.Any, action: { } }
+                { label: "Save", requirement: ImageStateReq.Any, action: { } },
+                { label: "Save As", requirement: ImageStateReq.Any, action: { } },
+                { label: "Duplicate", requirement: ImageStateReq.Any, action: { } }
             ],
         },
         {
@@ -57,7 +57,7 @@ export component LeftPanel inherits SlidingPanel {
 
     // Initialize SlidingPanel properties directly
     side: PanelSide.Left;
-    panel-width: 220px;
+    width: 220px;
 
     VerticalLayout {
         padding: StyleMetrics.layout-padding;

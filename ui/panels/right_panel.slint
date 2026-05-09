@@ -13,7 +13,7 @@ export component RightPanel inherits SlidingPanel {
     property <string> title;
 
     side: PanelSide.Right;
-    panel-width: 750px;
+    width: 750px;
 
     VerticalLayout {
         padding: StyleMetrics.layout-padding;
@@ -43,14 +43,15 @@ export component RightPanel inherits SlidingPanel {
                     root.close-panel();
                 }
             }
+        }
 
-            if PanelState == RightPanelState.Histogram: Histogram {
-                init() => {
-                    RustActions.calculate-gray-histogram()
-                }
-                data: GrayHistogramState.data;
-                max-value: GrayHistogramState.max-value;
+        if PanelState == RightPanelState.Histogram: Histogram {
+            init() => {
+                RustActions.calculate-gray-histogram()
             }
+            bar-spacing: 0px;
+            data: GrayHistogramState.data;
+            max-value: GrayHistogramState.max-value;
         }
     }
 }

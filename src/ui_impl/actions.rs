@@ -1,13 +1,14 @@
 use crate::ui_impl::helper;
-use opencv::{core::MatTraitConst, imgcodecs};
-use slint::{ComponentHandle, Model, SharedString, VecModel, Weak};
+use opencv::{
+    core::{MatTraitConst, MatTraitConstManual},
+    imgcodecs,
+};
+use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::rc::Rc;
 
-// Import the auto-generated Slint types from main.rs
-use crate::{ImageContainer, ImageStore, MainWindow};
+use crate::{GrayHistogramState, ImageContainer, ImageStore, MainWindow};
 
 pub fn open_file(ui_handle: &Weak<MainWindow>, images_model: &Rc<VecModel<ImageContainer>>) {
-    // 1. Open the dialog. Use `let else` for an early return if the user cancels.
     let Some(file_path) = rfd::FileDialog::new()
         .set_title("Select an Image")
         .add_filter("Images", &["png", "jpg", "jpeg", "bmp", "tiff"])
@@ -33,7 +34,6 @@ pub fn open_file(ui_handle: &Weak<MainWindow>, images_model: &Rc<VecModel<ImageC
     let slint_img = match helper::bga_to_slint(&mat) {
         Ok(img) => img,
         Err(e) => {
-            // 'e' contains the error string returned by your function
             eprintln!("{}", e);
             return;
         }
@@ -78,4 +78,49 @@ pub fn convert_color(ui_handle: &Weak<MainWindow>, images_model: &Rc<VecModel<Im
         }
         Err(e) => eprintln!("{}", e),
     }
+}
+
+pub fn calculate_gray_histogram(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) {
+    let Some(ui) = ui_handle.upgrade() else {
+        return;
+    };
+
+    let Some(img) = images_model.row_data(ui.global::<ImageStore>().get_selected_image() as usize)
+    else {
+        eprintln!("Couldn't retrieve img");
+        return;
+    };
+
+    if img.color {
+        eprintln!("Img is colored");
+        return;
+    }
+    let mat = match helper::slint_to_gray(&img.img) {
+        Ok(mat) => mat,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+    let mut max_value = 0;
+    let mut data = vec![0.0f32; 256];
+    let pixels = match mat.data_typed::<u8>() {
+        Ok(pixels) => pixels,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+
+    for pixel in pixels.iter() {
+        data[*pixel as usize] += 1.0;
+    }
+    let max_value = data.iter().cloned().fold(0.0f32, f32::max);
+
+    let hist_ui = ui.global::<GrayHistogramState>();
+    hist_ui.set_data(ModelRc::from(Rc::new(VecModel::from(data))));
+    hist_ui.set_max_value(max_value as f32);
 }

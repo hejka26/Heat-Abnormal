@@ -23,7 +23,7 @@ export global ImageStore {
         
         // 2. Anything else requires a valid selection. 
         // We can access selected-image directly because we are inside the global!
-        if (selected-image < 0) {
+        if (selected-image == -1) {
             return false;
         }
         

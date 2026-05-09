@@ -37,6 +37,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    ui.global::<RustActions>().on_calculate_gray_histogram({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || {
+            ui_impl::actions::calculate_gray_histogram(&ui_handle, &images_model);
+        }
+    });
+
     ui.run()?;
     Ok(())
 }
