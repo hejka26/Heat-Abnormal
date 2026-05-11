@@ -1,6 +1,8 @@
 export global GrayHistogramState {
     in property <[float]> data: [10, 25, 60, 90];
     in property <float> max-value: 100;
+    in property <float> mean;
+    in property <float> std-dev;
 }
 
 export global RGBHistogramState {

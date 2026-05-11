@@ -2,6 +2,8 @@ import { Palette, ScrollView } from "std-widgets.slint";
 export component Histogram inherits Rectangle {
     in property <[float]> data: [10, 25, 60, 90];
     in property <float> max-value: 100; // I wish this could be calculated in UI lol
+    in property <float> mean: 0;
+    in property <float> std-dev: 0;
 
     in property <color> bar-color: Palette.foreground;
     in property <length> bar-spacing: 0px;
@@ -11,65 +13,87 @@ export component Histogram inherits Rectangle {
     property <color> axis-color: #888888;
     property <length> chart-border-width: 2px;
     vertical-stretch: 1;
-    ScrollView {
-        GridLayout {
-            spacing: 12px;
+    VerticalLayout {
+        ScrollView {
+            GridLayout {
+                spacing: 12px;
 
-            Row {
+                Row {
             // Y-Axis Scale
             VerticalLayout {
-                    width: 35px;
-                    alignment: space-between;
+                        width: 35px;
+                        alignment: space-between;
 
-                    for multiplier in [1.0, 0.75, 0.5, 0.25, 0.0]: Text {
-                        text: round(root.max-value * multiplier);
-                        color: root.text-color;
-                        font-size: 12px;
-                        horizontal-alignment: right;
+                        for multiplier in [1.0, 0.75, 0.5, 0.25, 0.0]: Text {
+                            text: round(root.max-value * multiplier);
+                            color: root.text-color;
+                            font-size: 12px;
+                            horizontal-alignment: right;
+                        }
                     }
-                }
 
-                // Chart
+                    // Chart
 
                 Rectangle {
-                    border-color: root.axis-color;
-                    border-width: root.chart-border-width;
-                    border-radius: 6px;
+                        border-color: root.axis-color;
+                        border-width: root.chart-border-width;
+                        border-radius: 6px;
 
-                    // Internal padding so bars don't touch the border walls
+                        // Internal padding so bars don't touch the border walls
                 HorizontalLayout {
-                        padding: 8px;
-                        spacing: root.bar-spacing;
+                            padding: 8px;
+                            spacing: root.bar-spacing;
 
-                        for val in root.data: Rectangle {
-                            min-width: 5px;
-                            Rectangle {
-                                y: parent.height - self.height;
-                                height: parent.height * (val / root.max-value);
-                                background: root.bar-color;
-                                border-radius: root.bar-radius;
+                            for val in root.data: Rectangle {
+                                min-width: 5px;
+                                Rectangle {
+                                    y: parent.height - self.height;
+                                    height: parent.height * (val / root.max-value);
+                                    background: root.bar-color;
+                                    border-radius: root.bar-radius;
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Row {
+                Row {
             // Empty spacer to push the X-axis over
             Rectangle { }
 
-                // X-Axis Scale
+                    // X-Axis Scale
             HorizontalLayout {
-                    height: 35px;
-                    alignment: space-between;
+                        height: 35px;
+                        alignment: space-between;
 
-                    for multiplier in [0.0, 0.25, 0.5, 0.75, 1.0]: Text {
-                        text: round(root.data.length * multiplier);
-                        color: root.text-color;
-                        font-size: 12px;
-                        horizontal-alignment: center;
+                        for multiplier in [0.0, 0.25, 0.5, 0.75, 1.0]: Text {
+                            text: round(root.data.length * multiplier);
+                            color: root.text-color;
+                            font-size: 12px;
+                            horizontal-alignment: center;
+                        }
                     }
                 }
+            }
+        }
+
+        HorizontalLayout {
+            width: 100%;
+            spacing: 24px;
+            alignment: center;
+
+            Text {
+                text: "Avg: " + round(root.mean);
+                color: root.text-color;
+                font-size: 14px;
+                font-weight: FontWeight.bold;
+            }
+
+            Text {
+                text: "Std Dev: " + round(root.std-dev);
+                color: root.text-color;
+                font-size: 14px;
+                font-weight: FontWeight.bold;
             }
         }
     }

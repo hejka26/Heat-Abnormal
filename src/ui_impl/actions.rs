@@ -120,7 +120,45 @@ pub fn calculate_gray_histogram(
     }
     let max_value = data.iter().cloned().fold(0.0f32, f32::max);
 
+    // --- NOWY KOD: OBLICZANIE ŚREDNIEJ I ODCHYLENIA ---
+
+    // 1. Suma wszystkich pikseli (czyli N)
+    let total_pixels: f32 = data.iter().sum();
+
+    // 2. Obliczanie średniej (Mean)
+    let mean: f32 = if total_pixels > 0.0 {
+        data.iter()
+            .enumerate()
+            .map(|(intensity, &count)| (intensity as f32) * count)
+            .sum::<f32>()
+            / total_pixels
+    } else {
+        0.0
+    };
+
+    // 3. Obliczanie wariancji i odchylenia standardowego (Std Dev)
+    let std_dev: f32 = if total_pixels > 0.0 {
+        let variance = data
+            .iter()
+            .enumerate()
+            .map(|(intensity, &count)| {
+                let diff = (intensity as f32) - mean;
+                diff * diff * count // (x - mean)^2 * częstotliwość
+            })
+            .sum::<f32>()
+            / total_pixels;
+        variance.sqrt()
+    } else {
+        0.0
+    };
+
+    // Na ten moment wypisujemy w konsoli, dopóki nie dodasz tego do UI
+
+    // --- KONIEC NOWEGO KODU ---
+
     let hist_ui = ui.global::<GrayHistogramState>();
     hist_ui.set_data(ModelRc::from(Rc::new(VecModel::from(data))));
     hist_ui.set_max_value(max_value as f32);
+    hist_ui.set_mean(mean);
+    hist_ui.set_std_dev(std_dev);
 }
