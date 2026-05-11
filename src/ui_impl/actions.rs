@@ -119,6 +119,7 @@ pub fn calculate_gray_histogram(
         data[*pixel as usize] += 1.0;
     }
     let max_value = data.iter().cloned().fold(0.0f32, f32::max);
+    let total_pixels = data.iter().cloned().sum::<f32>();
 
     // --- NOWY KOD: OBLICZANIE ŚREDNIEJ I ODCHYLENIA ---
 
@@ -152,13 +153,93 @@ pub fn calculate_gray_histogram(
         0.0
     };
 
-    // Na ten moment wypisujemy w konsoli, dopóki nie dodasz tego do UI
-
-    // --- KONIEC NOWEGO KODU ---
-
     let hist_ui = ui.global::<GrayHistogramState>();
     hist_ui.set_data(ModelRc::from(Rc::new(VecModel::from(data))));
     hist_ui.set_max_value(max_value as f32);
+    hist_ui.set_total_pixels(total_pixels as f32);
     hist_ui.set_mean(mean);
     hist_ui.set_std_dev(std_dev);
+}
+
+pub fn equalize_histogram(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) {
+    let Some(ui) = ui_handle.upgrade() else {
+        return;
+    };
+
+    let selected_idx = ui.global::<ImageStore>().get_selected_image() as usize;
+
+    let Some(mut img) = images_model.row_data(selected_idx) else {
+        eprintln!("Nie udało się pobrać obrazu z modelu.");
+        return;
+    };
+
+    // Equalizacja klasyczna działa najlepiej na obrazach w skali szarości.
+    if img.color {
+        eprintln!(
+            "Obraz jest kolorowy. Najpierw przekonwertuj obraz na odcienie szarości (RGB2Gray)."
+        );
+        return;
+    }
+
+    // 1. Pobieramy bezpośrednio bufor pikseli ze Slinta
+    let Some(buffer) = img.img.to_rgb8() else {
+        eprintln!("Nie udało się odczytać pikseli obrazu.");
+        return;
+    };
+
+    let width = buffer.width();
+    let height = buffer.height();
+    let total_pixels = (width * height) as usize;
+
+    // 2. Krok 1: Obliczanie histogramu
+    // Skoro to skala szarości, R == G == B, więc sprawdzamy tylko kanał R
+    let mut hist = [0u32; 256];
+    for pixel in buffer.as_slice() {
+        hist[pixel.r as usize] += 1;
+    }
+
+    // 3. Krok 2: Obliczanie dystrybuanty (CDF)
+    let mut cdf = [0u32; 256];
+    let mut sum = 0;
+    for i in 0..256 {
+        sum += hist[i];
+        cdf[i] = sum;
+    }
+
+    // Znajdujemy minimalną niezerową wartość w CDF
+    let cdf_min = *cdf.iter().find(|&&x| x > 0).unwrap_or(&0) as f32;
+    let total_f32 = total_pixels as f32;
+
+    // 4. Krok 3: Tworzenie tablicy przekodowań (LUT - Look-Up Table) ze znormalizowanymi wartościami
+    let mut lut = [0u8; 256];
+    for i in 0..256 {
+        let v = ((cdf[i] as f32 - cdf_min) / (total_f32 - cdf_min) * 255.0).round();
+        // Zabezpieczenie przed wyjściem poza zakres u8 (0-255)
+        lut[i] = v.clamp(0.0, 255.0) as u8;
+    }
+
+    // 5. Krok 4: Aplikowanie LUT i tworzenie nowego obrazka dla Slinta
+    let mut new_buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(width, height);
+
+    // Iterujemy po starym buforze i zapisujemy do nowego korzystając z tablicy LUT
+    let old_slice = buffer.as_slice();
+    let new_slice = new_buffer.make_mut_slice();
+
+    for (i, pixel) in old_slice.iter().enumerate() {
+        let new_intensity = lut[pixel.r as usize];
+        new_slice[i] = slint::Rgb8Pixel {
+            r: new_intensity,
+            g: new_intensity,
+            b: new_intensity,
+        };
+    }
+
+    // 6. Zapisanie nowego obrazu z powrotem do modelu Slinta
+    img.img = slint::Image::from_rgb8(new_buffer);
+    images_model.set_row_data(selected_idx, img);
+
+    calculate_gray_histogram(ui_handle, images_model);
 }

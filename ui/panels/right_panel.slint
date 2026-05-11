@@ -7,6 +7,7 @@ import { Button, StyleMetrics } from "std-widgets.slint";
 import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
 import { RightPanelState } from "../widgets/right_panel_states.slint";
 import { Histogram } from "../widgets/histogram.slint";
+import { HistTable } from "../widgets/hist_table.slint";
 
 export component RightPanel inherits SlidingPanel {
     in-out property <RightPanelState> PanelState;
@@ -54,6 +55,17 @@ export component RightPanel inherits SlidingPanel {
             max-value: GrayHistogramState.max-value;
             mean: GrayHistogramState.mean;
             std-dev: GrayHistogramState.std-dev;
+        }
+        if PanelState == RightPanelState.HistogramTable: HistTable {
+            init() => {
+                RustActions.calculate-gray-histogram()
+            }
+            bar-spacing: 0px;
+            data: GrayHistogramState.data;
+            max-value: GrayHistogramState.max-value;
+            mean: GrayHistogramState.mean;
+            std-dev: GrayHistogramState.std-dev;
+            total-pixels: GrayHistogramState.total-pixels;
         }
     }
 }

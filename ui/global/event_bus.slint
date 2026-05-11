@@ -1,5 +1,6 @@
 export global GrayHistogramState {
     in property <[float]> data: [10, 25, 60, 90];
+    in property <float> total-pixels: 1;
     in property <float> max-value: 100;
     in property <float> mean;
     in property <float> std-dev;
@@ -16,4 +17,5 @@ export global RustActions {
     callback convert-color();
     callback calculate-gray-histogram();
     callback calculate-RGB-histogram();
+    callback equalize-histogram();
 }

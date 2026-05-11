@@ -1,0 +1,109 @@
+import { Palette, ScrollView, ListView } from "std-widgets.slint";
+
+export component HistTable inherits Rectangle {
+    in property <[float]> data: [10, 25, 60, 90];
+    in property <float> max-value: 100;
+    in property <float> mean: 0;
+    in property <float> std-dev: 0;
+
+    // Zamiast wysyłać całą drugą tablicę ze znormalizowanymi danymi, 
+    // wystarczy wysłać jedną zmienną i policzyć to w UI!
+    in property <float> total-pixels: 1;
+
+    // Opcjonalnie: jeśli bardzo chcesz drugi array, możesz odkomentować to:
+    // in property <[float]> normalized-data;
+
+    in property <color> bar-color: Palette.foreground;
+    in property <length> bar-spacing: 0px;
+    in property <length> bar-radius: 0px;
+    property <color> text-color: Palette.foreground;
+    property <color> axis-color: #888888;
+    property <length> chart-border-width: 2px;
+    vertical-stretch: 1;
+
+    VerticalLayout {
+        spacing: 12px;
+
+        // --- TABELA Z DANYMI ---
+        Rectangle {
+            vertical-stretch: 1;
+            border-color: root.axis-color;
+            border-width: 1px;
+            border-radius: 6px;
+
+            VerticalLayout {
+                Rectangle {
+                    background: root.axis-color.transparentize(0.5);
+                    height: 30px;
+                    border-radius: 4px;
+
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        Text {
+                            text: "Odcień";
+                            width: 25%;
+                            color: root.text-color;
+                            vertical-alignment: center;
+                            font-weight: FontWeight.bold;
+                        }
+
+                        Text {
+                            text: "Ilość (N)";
+                            width: 35%;
+                            color: root.text-color;
+                            vertical-alignment: center;
+                            font-weight: FontWeight.bold;
+                        }
+
+                        Text {
+                            text: "Znormalizowane";
+                            width: 40%;
+                            color: root.text-color;
+                            vertical-alignment: center;
+                            font-weight: FontWeight.bold;
+                        }
+                    }
+                }
+
+                // Iterujemy po prostu po `root.data`!
+                // Slint pozwala na wyciągnięcie `index` z pętli.
+                ListView {
+                    for count[index] in root.data: Rectangle {
+                        height: 25px;
+                        background: mod(index, 2) == 0 ? transparent : root.axis-color.transparentize(0.85);
+
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+
+                            // index = odcień, count = ilość pikseli
+                            Text {
+                                text: index;
+                                width: 25%;
+                                color: root.text-color;
+                                vertical-alignment: center;
+                            }
+
+                            Text {
+                                text: count;
+                                width: 35%;
+                                color: root.text-color;
+                                vertical-alignment: center;
+                            }
+
+                            Text { 
+                                // OBLICZANIE W LOCIE:
+                                text: round((count / root.total-pixels) * 10000) / 10000;
+
+                                width: 40%;
+                                color: #4da6ff;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
