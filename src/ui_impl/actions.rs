@@ -243,3 +243,72 @@ pub fn equalize_histogram(
 
     calculate_gray_histogram(ui_handle, images_model);
 }
+
+pub fn selective_stretch(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    min_in: u8,
+    max_in: u8,
+) {
+    let Some(ui) = ui_handle.upgrade() else {
+        return;
+    };
+
+    let selected_idx = ui.global::<ImageStore>().get_selected_image() as usize;
+
+    let Some(mut img) = images_model.row_data(selected_idx) else {
+        return;
+    };
+
+    if img.color {
+        eprintln!("Obraz jest kolorowy. Najpierw przekonwertuj na odcienie szarości.");
+        return;
+    }
+
+    if min_in >= max_in {
+        eprintln!("Błędne parametry: min_in musi być mniejsze od max_in.");
+        return;
+    }
+
+    let Some(buffer) = img.img.to_rgb8() else {
+        return;
+    };
+    let width = buffer.width();
+    let height = buffer.height();
+
+    // Tworzenie tablicy LUT dla zadanego okna [min_in, max_in]
+    let mut lut = [0u8; 256];
+    let min_f32 = min_in as f32;
+    let max_f32 = max_in as f32;
+
+    for i in 0..=255 {
+        if i <= min_in as usize {
+            lut[i] = 0; // Ucinanie ciemnych pikseli
+        } else if i >= max_in as usize {
+            lut[i] = 255; // Ucinanie jasnych pikseli
+        } else {
+            // Liniowe rozciągnięcie tylko środkowego fragmentu
+            let v = ((i as f32 - min_f32) / (max_f32 - min_f32) * 255.0).round();
+            lut[i] = v.clamp(0.0, 255.0) as u8;
+        }
+    }
+
+    // Aplikowanie LUT
+    let mut new_buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(width, height);
+    let old_slice = buffer.as_slice();
+    let new_slice = new_buffer.make_mut_slice();
+
+    for (i, pixel) in old_slice.iter().enumerate() {
+        let new_intensity = lut[pixel.r as usize];
+        new_slice[i] = slint::Rgb8Pixel {
+            r: new_intensity,
+            g: new_intensity,
+            b: new_intensity,
+        };
+    }
+
+    img.img = slint::Image::from_rgb8(new_buffer);
+    images_model.set_row_data(selected_idx, img);
+
+    calculate_gray_histogram(ui_handle, images_model);
+}

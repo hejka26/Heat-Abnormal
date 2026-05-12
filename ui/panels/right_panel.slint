@@ -3,7 +3,7 @@ import {
     GrayHistogramState,
     RGBHistogramState,
 } from "../global/event_bus.slint";
-import { Button, StyleMetrics } from "std-widgets.slint";
+import { Button, StyleMetrics, Slider } from "std-widgets.slint";
 import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
 import { RightPanelState } from "../widgets/right_panel_states.slint";
 import { Histogram } from "../widgets/histogram.slint";
@@ -46,7 +46,7 @@ export component RightPanel inherits SlidingPanel {
             }
         }
 
-        if PanelState == RightPanelState.Histogram: Histogram {
+        if PanelState == RightPanelState.Histogram || PanelState == RightPanelState.StretchHistogram: Histogram {
             init() => {
                 RustActions.calculate-gray-histogram()
             }
@@ -56,6 +56,54 @@ export component RightPanel inherits SlidingPanel {
             mean: GrayHistogramState.mean;
             std-dev: GrayHistogramState.std-dev;
         }
+        if PanelState == RightPanelState.StretchHistogram: VerticalLayout {
+            spacing: 5px;
+
+            // Suwak dla wartości MIN
+            HorizontalLayout {
+                spacing: 10px;
+    // Wyświetlanie aktualnej wartości min
+                Text {
+                    text: "Min: " + round(min-slider.value);
+                    width: 60px;
+                    vertical-alignment: center;
+                }
+
+                min-slider := Slider {
+                    minimum: 0; 
+        // Blokujemy maksymalne przesunięcie suwaka przed wartością MAX
+        maximum: max-slider.value - 1;
+                    value: 0;
+                }
+            }
+
+            // Suwak dla wartości MAX
+HorizontalLayout {
+                spacing: 10px;
+    // Wyświetlanie aktualnej wartości max
+    Text {
+                    text: "Max: " + round(max-slider.value);
+                    width: 60px;
+                    vertical-alignment: center;
+                }
+
+                max-slider := Slider { 
+        // Blokujemy minimalne przesunięcie suwaka tuż za wartością MIN
+        minimum: min-slider.value + 1;
+                    maximum: 255;
+                    value: 255;
+                }
+            }
+
+            Button {
+                text: "Zastosuj Selektywne";
+                clicked => {
+    // Przekazujemy zaokrąglone wartości z suwaków jako parametry 'int' do callbacka
+    RustActions.selective-stretch(round(min-slider.value), round(max-slider.value));
+                }
+            }
+        }
+
         if PanelState == RightPanelState.HistogramTable: HistTable {
             init() => {
                 RustActions.calculate-gray-histogram()

@@ -1,7 +1,6 @@
 import { Button, StyleMetrics } from "std-widgets.slint";
 import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
 import { RightPanelState } from "../widgets/right_panel_states.slint";
-import { RustAction } from "../global/rust_actions.slint";
 import { RustActions } from "../global/event_bus.slint";
 import {
     ImageStateReq,
@@ -9,6 +8,14 @@ import {
     ImageStore,
 } from "../global/image_data.slint";
 
+
+export enum RustAction {
+    None,
+    OpenFile,
+    SaveFile,
+    ConvertColor,
+    EqualizeHistogram,
+}
 
 struct ButtonAction { right-menu: RightPanelState, rust-action: RustAction}
 struct SubMenuButton { label: string, requirement: ImageStateReq, action: ButtonAction}
@@ -39,6 +46,11 @@ export component LeftPanel inherits SlidingPanel {
                     label: "Equalize Histogram",
                     requirement: ImageStateReq.Gray,
                     action: { rust-action: RustAction.EqualizeHistogram }
+                },
+                {
+                    label: "Stretch Histogram",
+                    requirement: ImageStateReq.Gray,
+                    action: { right-menu: RightPanelState.StretchHistogram }
                 },
             ],
         },

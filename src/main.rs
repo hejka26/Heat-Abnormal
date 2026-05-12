@@ -52,6 +52,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ui_impl::actions::equalize_histogram(&ui_handle, &images_model);
         }
     });
+    ui.global::<RustActions>().on_selective_stretch({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |min_val, max_val| {
+            // Slint przekaże tu zmienne typu i32 (zależy jak je zdefiniujesz w pliku .slint), więc rzutujemy na u8
+            ui_impl::actions::selective_stretch(
+                &ui_handle,
+                &images_model,
+                min_val as u8,
+                max_val as u8,
+            );
+        }
+    });
 
     ui.run()?;
     Ok(())
