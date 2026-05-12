@@ -13,7 +13,7 @@ use crate::{ImageContainer, ImageStore, MainWindow};
 pub fn bga_to_slint(mat: &Mat) -> Result<Image, String> {
     let mut rgb_mat = Mat::default();
     if let Err(e) = imgproc::cvt_color(
-        &mat,
+        mat,
         &mut rgb_mat,
         imgproc::COLOR_BGR2RGB,
         0,
@@ -50,7 +50,7 @@ pub fn rgb_to_slint(mat: &Mat) -> Result<Image, String> {
 pub fn gray_to_slint(mat: &Mat) -> Result<Image, String> {
     let mut rgb_mat = Mat::default();
     if let Err(e) = imgproc::cvt_color(
-        &mat,
+        mat,
         &mut rgb_mat,
         imgproc::COLOR_GRAY2RGB,
         0,
