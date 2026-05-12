@@ -105,7 +105,6 @@ pub fn calculate_gray_histogram(
             return;
         }
     };
-    let mut max_value = 0;
     let mut data = vec![0.0f32; 256];
     let pixels = match mat.data_typed::<u8>() {
         Ok(pixels) => pixels,
@@ -118,15 +117,10 @@ pub fn calculate_gray_histogram(
     for pixel in pixels.iter() {
         data[*pixel as usize] += 1.0;
     }
+
     let max_value = data.iter().cloned().fold(0.0f32, f32::max);
-    let total_pixels = data.iter().cloned().sum::<f32>();
-
-    // --- NOWY KOD: OBLICZANIE ŚREDNIEJ I ODCHYLENIA ---
-
-    // 1. Suma wszystkich pikseli (czyli N)
     let total_pixels: f32 = data.iter().sum();
 
-    // 2. Obliczanie średniej (Mean)
     let mean: f32 = if total_pixels > 0.0 {
         data.iter()
             .enumerate()
@@ -137,7 +131,6 @@ pub fn calculate_gray_histogram(
         0.0
     };
 
-    // 3. Obliczanie wariancji i odchylenia standardowego (Std Dev)
     let std_dev: f32 = if total_pixels > 0.0 {
         let variance = data
             .iter()
@@ -281,7 +274,7 @@ pub fn selective_stretch(
     let min_f32 = min_in as f32;
     let max_f32 = max_in as f32;
 
-    for i in 0..=255 {
+    (0..=255).for_each(|i| {
         if i <= min_in as usize {
             lut[i] = 0; // Ucinanie ciemnych pikseli
         } else if i >= max_in as usize {
@@ -291,7 +284,7 @@ pub fn selective_stretch(
             let v = ((i as f32 - min_f32) / (max_f32 - min_f32) * 255.0).round();
             lut[i] = v.clamp(0.0, 255.0) as u8;
         }
-    }
+    });
 
     // Aplikowanie LUT
     let mut new_buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(width, height);

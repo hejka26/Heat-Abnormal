@@ -1,5 +1,5 @@
 use opencv::{
-    core::{CV_8UC1, CV_8UC3, Scalar},
+    core::{CV_8UC3, Scalar},
     imgproc,
     prelude::*,
 };
