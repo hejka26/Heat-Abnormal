@@ -53,13 +53,7 @@ pub fn open_file(ui_handle: &Weak<MainWindow>, images_model: &Rc<VecModel<ImageC
 }
 
 pub fn convert_color(ui_handle: &Weak<MainWindow>, images_model: &Rc<VecModel<ImageContainer>>) {
-    let Some(ui) = ui_handle.upgrade() else {
-        return;
-    };
-
-    let selected_idx = ui.global::<ImageStore>().get_selected_image() as usize;
-
-    let Some(mut img) = images_model.row_data(selected_idx) else {
+    let Ok((_, selected_idx, mut img)) = helper::get_current_image(ui_handle, images_model) else {
         eprintln!("Couldn't retrieve img");
         return;
     };
@@ -84,12 +78,7 @@ pub fn calculate_gray_histogram(
     ui_handle: &Weak<MainWindow>,
     images_model: &Rc<VecModel<ImageContainer>>,
 ) {
-    let Some(ui) = ui_handle.upgrade() else {
-        return;
-    };
-
-    let Some(img) = images_model.row_data(ui.global::<ImageStore>().get_selected_image() as usize)
-    else {
+    let Ok((ui, _, img)) = helper::get_current_image(ui_handle, images_model) else {
         eprintln!("Couldn't retrieve img");
         return;
     };
@@ -158,18 +147,11 @@ pub fn equalize_histogram(
     ui_handle: &Weak<MainWindow>,
     images_model: &Rc<VecModel<ImageContainer>>,
 ) {
-    let Some(ui) = ui_handle.upgrade() else {
+    let Ok((_, selected_idx, mut img)) = helper::get_current_image(ui_handle, images_model) else {
+        eprintln!("Couldn't retrieve img");
         return;
     };
 
-    let selected_idx = ui.global::<ImageStore>().get_selected_image() as usize;
-
-    let Some(mut img) = images_model.row_data(selected_idx) else {
-        eprintln!("Nie udało się pobrać obrazu z modelu.");
-        return;
-    };
-
-    // Equalizacja klasyczna działa najlepiej na obrazach w skali szarości.
     if img.color {
         eprintln!(
             "Obraz jest kolorowy. Najpierw przekonwertuj obraz na odcienie szarości (RGB2Gray)."
