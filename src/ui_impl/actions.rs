@@ -38,7 +38,7 @@ pub fn open_file(
 
     // 3. helper::bga_to_slint already returns Result<Image, String>,
     // so we can just use ? to propagate its error directly!
-    let slint_img = helper::bga_to_slint(&mat)?;
+    let slint_img = helper::bgr_to_slint(&mat)?;
 
     // Append it to your VecModel
     images_model.push(ImageContainer {
@@ -243,4 +243,62 @@ pub fn selective_stretch(
     images_model.set_row_data(selected_idx, img);
 
     calculate_gray_histogram(ui_handle, images_model)
+}
+
+pub fn posterize(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    levels: u8,
+) -> Result<(), String> {
+    // 1. Pobranie aktualnego obrazu
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+
+    if levels < 2 {
+        return Err("Liczba poziomów musi wynosić co najmniej 2".to_string());
+    }
+
+    let Some(buffer) = img.img.to_rgb8() else {
+        return Err("Nie udało się pobrać bufora obrazu".to_string());
+    };
+
+    let width = buffer.width();
+    let height = buffer.height();
+
+    // 2. Tworzenie tablicy LUT (Look-Up Table)
+    // Dzielimy 255 na (levels - 1) przedziałów.
+    // Np. dla 2 poziomów krok = 255.0, dla 3 poziomów krok = 127.5
+    let mut lut = [0u8; 256];
+    let step = 255.0 / (levels as f32 - 1.0);
+
+    for i in 0..=255 {
+        // Obliczamy "koszyk" do którego wpada dany odcień i mnożymy z powrotem przez krok
+        let bin = (i as f32 / step).round();
+        lut[i] = (bin * step).clamp(0.0, 255.0) as u8;
+    }
+
+    // 3. Aplikacja tablicy LUT na obraz (używając szybkiego iteratora zip)
+    let mut new_buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(width, height);
+
+    for (old_pixel, new_pixel) in buffer
+        .as_slice()
+        .iter()
+        .zip(new_buffer.make_mut_slice().iter_mut())
+    {
+        *new_pixel = slint::Rgb8Pixel {
+            r: lut[old_pixel.r as usize],
+            g: lut[old_pixel.g as usize],
+            b: lut[old_pixel.b as usize],
+        };
+    }
+
+    // 4. Zapisanie zmienionego obrazu z powrotem do modelu
+    img.img = slint::Image::from_rgb8(new_buffer);
+    images_model.set_row_data(selected_idx, img.clone());
+
+    // 5. Opcjonalnie: odświeżenie histogramu, jeśli jesteśmy w skali szarości
+    if !img.color {
+        let _ = calculate_gray_histogram(ui_handle, images_model);
+    }
+
+    Ok(())
 }

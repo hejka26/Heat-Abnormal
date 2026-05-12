@@ -59,4 +59,11 @@ pub fn setup_callbacks(ui: &MainWindow, images_model: &Rc<VecModel<ImageContaine
             })
         }
     });
+
+    ui.global::<RustActions>().on_posterize({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        // Slint przesyła int (i32), więc rzutujemy na u8
+        move |levels| handle_action(|| actions::posterize(&ui_handle, &images_model, levels as u8))
+    });
 }

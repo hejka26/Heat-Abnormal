@@ -52,6 +52,11 @@ export component LeftPanel inherits SlidingPanel {
                     requirement: ImageStateReq.Gray,
                     action: { right-menu: RightPanelState.StretchHistogram }
                 },
+                {
+                    label: "Posteryzacja",
+                    requirement: ImageStateReq.Any,
+                    action: { right-menu: RightPanelState.Posterize }
+                }
             ],
         },
         {

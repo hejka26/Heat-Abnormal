@@ -48,6 +48,7 @@ export component RightPanel inherits SlidingPanel {
 
         if PanelState == RightPanelState.Histogram || PanelState == RightPanelState.StretchHistogram: Histogram {
             init() => {
+                title = "Histogram";
                 RustActions.calculate-gray-histogram()
             }
             bar-spacing: 0px;
@@ -56,13 +57,17 @@ export component RightPanel inherits SlidingPanel {
             mean: GrayHistogramState.mean;
             std-dev: GrayHistogramState.std-dev;
         }
+
         if PanelState == RightPanelState.StretchHistogram: VerticalLayout {
             spacing: 5px;
 
+            init() => {
+                title = "Stretch histogram";
+                RustActions.calculate-gray-histogram()
+            }
             // Suwak dla wartości MIN
             HorizontalLayout {
                 spacing: 10px;
-    // Wyświetlanie aktualnej wartości min
                 Text {
                     text: "Min: " + round(min-slider.value);
                     width: 60px;
@@ -70,42 +75,38 @@ export component RightPanel inherits SlidingPanel {
                 }
 
                 min-slider := Slider {
-                    minimum: 0; 
-        // Blokujemy maksymalne przesunięcie suwaka przed wartością MAX
-        maximum: max-slider.value - 1;
+                    minimum: 0;
+                    maximum: max-slider.value - 1;
                     value: 0;
                 }
             }
 
-            // Suwak dla wartości MAX
-HorizontalLayout {
+            HorizontalLayout {
                 spacing: 10px;
-    // Wyświetlanie aktualnej wartości max
-    Text {
+                Text {
                     text: "Max: " + round(max-slider.value);
                     width: 60px;
                     vertical-alignment: center;
                 }
 
-                max-slider := Slider { 
-        // Blokujemy minimalne przesunięcie suwaka tuż za wartością MIN
-        minimum: min-slider.value + 1;
+                max-slider := Slider {
+                    minimum: min-slider.value + 1;
                     maximum: 255;
                     value: 255;
                 }
             }
 
             Button {
-                text: "Zastosuj Selektywne";
+                text: "Apply";
                 clicked => {
-    // Przekazujemy zaokrąglone wartości z suwaków jako parametry 'int' do callbacka
-    RustActions.selective-stretch(round(min-slider.value), round(max-slider.value));
+                    RustActions.selective-stretch(round(min-slider.value), round(max-slider.value));
                 }
             }
         }
 
         if PanelState == RightPanelState.HistogramTable: HistTable {
             init() => {
+                title = "Table";
                 RustActions.calculate-gray-histogram()
             }
             bar-spacing: 0px;
@@ -114,6 +115,38 @@ HorizontalLayout {
             mean: GrayHistogramState.mean;
             std-dev: GrayHistogramState.std-dev;
             total-pixels: GrayHistogramState.total-pixels;
+        }
+
+        if PanelState == RightPanelState.Posterize: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+
+            init() => {
+                title = "Posterization";
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text {
+                    text: "Level: " + round(levels-slider.value);
+                    width: 80px;
+                    vertical-alignment: center;
+                }
+
+                levels-slider := Slider {
+                    minimum: 2;   // Minimum 2 poziomy (czarny i biały)
+                    maximum: 128; // Zbyt wysokie wartości i tak nie mają sensu wizualnego
+                    value: 4;     // Domyślnie redukujemy do 4 poziomów
+                }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    RustActions.posterize(round(levels-slider.value));
+                }
+            }
         }
     }
 }

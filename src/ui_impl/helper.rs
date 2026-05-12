@@ -10,7 +10,7 @@ use slint::{ComponentHandle, Image, Model, Rgb8Pixel, SharedPixelBuffer};
 // Import your generated Slint types from the root crate
 use crate::{ImageContainer, ImageStore, MainWindow};
 
-pub fn bga_to_slint(mat: &Mat) -> Result<Image, String> {
+pub fn bgr_to_slint(mat: &Mat) -> Result<Image, String> {
     let mut rgb_mat = Mat::default();
     if let Err(e) = imgproc::cvt_color(
         mat,
