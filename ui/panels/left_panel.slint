@@ -53,7 +53,7 @@ export component LeftPanel inherits SlidingPanel {
                     action: { right-menu: RightPanelState.StretchHistogram }
                 },
                 {
-                    label: "Posteryzacja",
+                    label: "Posterize",
                     requirement: ImageStateReq.Any,
                     action: { right-menu: RightPanelState.Posterize }
                 }
@@ -74,10 +74,6 @@ export component LeftPanel inherits SlidingPanel {
                 }
             ],
         },
-        {
-            label: "Process",
-            submenu: [],
-        }
     ];
 
     callback set-right-menu(RightPanelState);
