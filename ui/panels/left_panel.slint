@@ -29,8 +29,11 @@ export component LeftPanel inherits SlidingPanel {
             label: "File",
             submenu: [
                 { label: "Open", action: { rust-action: RustAction.OpenFile } },
-                { label: "Save", requirement: ImageStateReq.Any, action: { } },
-                { label: "Save As", requirement: ImageStateReq.Any, action: { } },
+                {
+                    label: "Save",
+                    requirement: ImageStateReq.Any,
+                    action: { rust-action: RustAction.SaveFile }
+                },
                 { label: "Duplicate", requirement: ImageStateReq.Any, action: { } }
             ],
         },
@@ -139,6 +142,9 @@ export component LeftPanel inherits SlidingPanel {
                             }
                             if sub-item.action.rust-action == RustAction.OpenFile {
                                 RustActions.open-file();
+                            }
+                            if sub-item.action.rust-action == RustAction.SaveFile {
+                                RustActions.save-file();
                             }
                             if sub-item.action.rust-action == RustAction.ConvertColor {
                                 RustActions.convert-color();

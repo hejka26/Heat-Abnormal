@@ -1,7 +1,8 @@
 use crate::ui_impl::helper;
 use opencv::{
     core::{MatTraitConst, MatTraitConstManual},
-    imgcodecs,
+    imgcodecs, imgproc,
+    prelude::*,
 };
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::rc::Rc;
@@ -53,6 +54,40 @@ pub fn open_file(
     } else {
         return Err("Failed to access UI. The window might have been closed.".to_string());
     }
+
+    Ok(())
+}
+
+pub fn save_file(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) -> Result<(), String> {
+    let (_, _, img) = helper::get_current_image(ui_handle, images_model)?;
+
+    let Some(file_path) = rfd::FileDialog::new()
+        .set_title("Save Image")
+        .add_filter("Images", &["png", "jpg", "jpeg", "bmp", "tiff"])
+        .save_file()
+    else {
+        return Ok(());
+    };
+
+    let path_str = file_path.to_string_lossy();
+
+    let rgb_mat = helper::slint_to_rgb(&img.img)?;
+
+    let mut bgr_mat = Mat::default();
+    imgproc::cvt_color(
+        &rgb_mat,
+        &mut bgr_mat,
+        imgproc::COLOR_RGB2BGR,
+        0,
+        opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT,
+    )
+    .map_err(|e| format!("Failed to convert to BGR: {}", e))?;
+
+    imgcodecs::imwrite(&path_str, &bgr_mat, &opencv::core::Vector::new())
+        .map_err(|e| format!("Failed to save image: {}", e))?;
 
     Ok(())
 }

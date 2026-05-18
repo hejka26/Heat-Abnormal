@@ -27,6 +27,12 @@ pub fn setup_callbacks(ui: &MainWindow, images_model: &Rc<VecModel<ImageContaine
         move || handle_action(|| actions::open_file(&ui_handle, &images_model))
     });
 
+    ui.global::<RustActions>().on_save_file({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || handle_action(|| actions::save_file(&ui_handle, &images_model))
+    });
+
     // 3. Bind Convert Color
     ui.global::<RustActions>().on_convert_color({
         let images_model = images_model.clone();
