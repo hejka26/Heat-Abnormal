@@ -33,6 +33,14 @@ pub fn setup_callbacks(ui: &MainWindow, images_model: &Rc<VecModel<ImageContaine
         move || handle_action(|| actions::save_file(&ui_handle, &images_model))
     });
 
+    ui.global::<RustActions>().on_close_file({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |index| {
+            handle_action(|| actions::close_file(&ui_handle, &images_model, index as usize))
+        }
+    });
+
     // 3. Bind Convert Color
     ui.global::<RustActions>().on_convert_color({
         let images_model = images_model.clone();
@@ -52,6 +60,13 @@ pub fn setup_callbacks(ui: &MainWindow, images_model: &Rc<VecModel<ImageContaine
         let images_model = images_model.clone();
         let ui_handle = ui.as_weak();
         move || handle_action(|| actions::equalize_histogram(&ui_handle, &images_model))
+    });
+
+    // 5.5 Bind Skeletonize
+    ui.global::<RustActions>().on_skeletonize({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || handle_action(|| actions::skeletonize(&ui_handle, &images_model))
     });
 
     // 6. Bind Selective Stretch

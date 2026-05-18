@@ -15,10 +15,12 @@ export global RGBHistogramState {
 export global RustActions {
     callback open-file();
     callback save-file();
+    callback close-file(int);
     callback convert-color();
     callback calculate-gray-histogram();
     callback calculate-RGB-histogram();
     callback equalize-histogram();
+    callback skeletonize();
     callback selective-stretch(int, int);
     callback posterize(int);
 }

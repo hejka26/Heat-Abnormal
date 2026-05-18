@@ -13,40 +13,42 @@ pub fn open_file(
     ui_handle: &Weak<MainWindow>,
     images_model: &Rc<VecModel<ImageContainer>>,
 ) -> Result<(), String> {
-    let Some(file_path) = rfd::FileDialog::new()
-        .set_title("Select an Image")
+    let Some(file_paths) = rfd::FileDialog::new()
+        .set_title("Select Image(s)")
         .add_filter("Images", &["png", "jpg", "jpeg", "bmp", "tiff"])
-        .pick_file()
+        .pick_files()
     else {
         // The user cancelled the dialog. This is normal behavior, not an error.
         return Ok(());
     };
 
-    let path_str = file_path.to_string_lossy();
-    let filename = file_path
-        .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_default();
+    for file_path in file_paths {
+        let path_str = file_path.to_string_lossy();
+        let filename = file_path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
 
-    // 1. Convert OpenCV error to a String using map_err, then use ? to propagate
-    let mat = imgcodecs::imread(&path_str, imgcodecs::IMREAD_COLOR)
-        .map_err(|e| format!("OpenCV failed to load the image: {}", e))?;
+        // 1. Convert OpenCV error to a String using map_err, then use ? to propagate
+        let mat = imgcodecs::imread(&path_str, imgcodecs::IMREAD_COLOR)
+            .map_err(|e| format!("OpenCV failed to load the image {}: {}", path_str, e))?;
 
-    // 2. Check for empty matrix explicitly and return an Err
-    if mat.empty() {
-        return Err(format!("OpenCV returned an empty image at: {}", path_str));
+        // 2. Check for empty matrix explicitly and return an Err
+        if mat.empty() {
+            return Err(format!("OpenCV returned an empty image at: {}", path_str));
+        }
+
+        // 3. helper::bga_to_slint already returns Result<Image, String>,
+        // so we can just use ? to propagate its error directly!
+        let slint_img = helper::bgr_to_slint(&mat)?;
+
+        // Append it to your VecModel
+        images_model.push(ImageContainer {
+            img: slint_img,
+            label: SharedString::from(filename),
+            color: true,
+        });
     }
-
-    // 3. helper::bga_to_slint already returns Result<Image, String>,
-    // so we can just use ? to propagate its error directly!
-    let slint_img = helper::bgr_to_slint(&mat)?;
-
-    // Append it to your VecModel
-    images_model.push(ImageContainer {
-        img: slint_img,
-        label: SharedString::from(filename),
-        color: true,
-    });
 
     if let Some(ui) = ui_handle.upgrade() {
         let new_index = (images_model.row_count() - 1) as i32;
@@ -88,6 +90,33 @@ pub fn save_file(
 
     imgcodecs::imwrite(&path_str, &bgr_mat, &opencv::core::Vector::new())
         .map_err(|e| format!("Failed to save image: {}", e))?;
+
+    Ok(())
+}
+
+pub fn close_file(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    index: usize,
+) -> Result<(), String> {
+    if index >= images_model.row_count() {
+        return Err("Invalid index to close".to_string());
+    }
+
+    images_model.remove(index);
+
+    if let Some(ui) = ui_handle.upgrade() {
+        let store = ui.global::<ImageStore>();
+        let current_selected = store.get_selected_image();
+        let row_count = images_model.row_count() as i32;
+
+        if row_count == 0 {
+            store.set_selected_image(-1);
+        } else if current_selected >= index as i32 {
+            let new_selected = (current_selected - 1).max(0);
+            store.set_selected_image(new_selected);
+        }
+    }
 
     Ok(())
 }
@@ -222,6 +251,95 @@ pub fn equalize_histogram(
     images_model.set_row_data(selected_idx, img);
 
     calculate_gray_histogram(ui_handle, images_model)
+}
+
+pub fn skeletonize(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+
+    if img.color {
+        return Err("Skeletonization requires a grayscale image".to_string());
+    }
+
+    let mat = helper::slint_to_gray(&img.img)?;
+
+    // Binarize the image (Otsu thresholding is a good choice)
+    let mut binary = Mat::default();
+    imgproc::threshold(
+        &mat,
+        &mut binary,
+        0.0,
+        255.0,
+        imgproc::THRESH_BINARY | imgproc::THRESH_OTSU,
+    )
+    .map_err(|e| format!("Binarization failed: {}", e))?;
+
+    let mut skeleton = Mat::new_rows_cols_with_default(
+        binary.rows(),
+        binary.cols(),
+        binary.typ(),
+        opencv::core::Scalar::all(0.0),
+    )
+    .map_err(|e| e.to_string())?;
+
+    let element = imgproc::get_structuring_element(
+        imgproc::MORPH_CROSS,
+        opencv::core::Size::new(3, 3),
+        opencv::core::Point::new(-1, -1),
+    )
+    .map_err(|e| e.to_string())?;
+
+    let mut eroded = Mat::default();
+    let mut temp = Mat::default();
+
+    loop {
+        imgproc::erode(
+            &binary,
+            &mut eroded,
+            &element,
+            opencv::core::Point::new(-1, -1),
+            1,
+            opencv::core::BORDER_CONSTANT,
+            imgproc::morphology_default_border_value()
+                .map_err(|e| format!("Failed to get border value: {}", e))?,
+        )
+        .map_err(|e| format!("Erosion failed: {}", e))?;
+
+        imgproc::dilate(
+            &eroded,
+            &mut temp,
+            &element,
+            opencv::core::Point::new(-1, -1),
+            1,
+            opencv::core::BORDER_CONSTANT,
+            imgproc::morphology_default_border_value()
+                .map_err(|e| format!("Failed to get border value: {}", e))?,
+        )
+        .map_err(|e| format!("Dilation failed: {}", e))?;
+
+        let mut sub_result = Mat::default();
+        opencv::core::subtract(&binary, &temp, &mut sub_result, &opencv::core::no_array(), -1)
+            .map_err(|e| format!("Subtraction failed: {}", e))?;
+
+        let mut or_result = Mat::default();
+        opencv::core::bitwise_or(&skeleton, &sub_result, &mut or_result, &opencv::core::no_array())
+            .map_err(|e| format!("Bitwise OR failed: {}", e))?;
+        skeleton = or_result;
+
+        binary = eroded.clone();
+
+        let zeros = opencv::core::count_non_zero(&binary).map_err(|e| e.to_string())?;
+        if zeros == 0 {
+            break;
+        }
+    }
+
+    img.img = helper::gray_to_slint(&skeleton)?;
+    images_model.set_row_data(selected_idx, img);
+
+    Ok(())
 }
 
 pub fn selective_stretch(

@@ -9,6 +9,8 @@ import {
 } from "std-widgets.slint";
 
 import { LeftPanel } from "./panels/left_panel.slint";
+import { ImageTabs } from "./widgets/image_tabs.slint";
+import { RustActions } from "./global/event_bus.slint";
 
 import { RightPanelState } from "./widgets/right_panel_states.slint";
 import { RightPanel } from "panels/right_panel.slint";
@@ -89,10 +91,14 @@ export component MainWindow inherits Window {
         }
 
         ScrollView {
-            height: 40px;
-            viewport-width: 300px;
+            height: 70px;
+            viewport-width: ImageStore.loaded-images.length * 168px + 10px;
 
-            // TODO: Make widget for selecting tabs and add it here...
+            ImageTabs {
+                close-image(index) => {
+                    RustActions.close-file(index);
+                }
+            }
         }
     }
 

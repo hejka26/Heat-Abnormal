@@ -1,0 +1,67 @@
+import { Palette, StyleMetrics } from "std-widgets.slint";
+import { ImageStore } from "../global/image_data.slint";
+
+export component ImageTabs inherits Rectangle {
+    callback close-image(int);
+
+    height: 60px;
+    background: Palette.alternate-background;
+    border-radius: 4px;
+
+    HorizontalLayout {
+        padding: 4px;
+        spacing: 8px;
+        alignment: start;
+
+        for img-data[index] in ImageStore.loaded-images : Rectangle {
+            width: 160px;
+            background: ImageStore.selected-image == index ? Palette.selection-background : Palette.background;
+            border-radius: 4px;
+            clip: true;
+
+            TouchArea {
+                clicked => { ImageStore.selected-image = index; }
+            }
+
+            HorizontalLayout {
+                padding: 4px;
+                spacing: 6px;
+                
+                Image {
+                    source: img-data.img;
+                    width: 48px;
+                    height: 48px;
+                    image-fit: contain;
+                }
+
+                Text {
+                    text: img-data.label;
+                    vertical-alignment: center;
+                    color: Palette.foreground;
+                    overflow: elide;
+                    horizontal-stretch: 1;
+                }
+
+                // Close button
+                Rectangle {
+                    width: 20px;
+                    height: 20px;
+                    background: close-touch.has-hover ? Palette.alternate-background.darker(10%) : transparent;
+                    border-radius: 10px;
+                    
+                    Text {
+                        text: "×";
+                        color: Palette.foreground;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        font-size: 16px;
+                    }
+                    
+                    close-touch := TouchArea {
+                        clicked => { root.close-image(index); }
+                    }
+                }
+            }
+        }
+    }
+}

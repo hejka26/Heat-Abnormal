@@ -15,6 +15,7 @@ export enum RustAction {
     SaveFile,
     ConvertColor,
     EqualizeHistogram,
+    Skeletonize,
 }
 
 struct ButtonAction { right-menu: RightPanelState, rust-action: RustAction}
@@ -49,6 +50,11 @@ export component LeftPanel inherits SlidingPanel {
                     label: "Equalize Histogram",
                     requirement: ImageStateReq.Gray,
                     action: { rust-action: RustAction.EqualizeHistogram }
+                },
+                {
+                    label: "Skeletonize",
+                    requirement: ImageStateReq.Gray,
+                    action: { rust-action: RustAction.Skeletonize }
                 },
                 {
                     label: "Stretch Histogram",
@@ -151,6 +157,9 @@ export component LeftPanel inherits SlidingPanel {
                             }
                             if sub-item.action.rust-action == RustAction.EqualizeHistogram {
                                 RustActions.equalize-histogram();
+                            }
+                            if sub-item.action.rust-action == RustAction.Skeletonize {
+                                RustActions.skeletonize();
                             }
                         }
                     }
