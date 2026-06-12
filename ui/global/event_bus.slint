@@ -31,5 +31,9 @@ export global RustActions {
     callback segment(int);
     callback median-filter(int);
     callback dilate(int);
-    callback custom-filter(float, float, float, float, float, float, float, float, float);
+    callback custom-filter(float, float, float, float, float, float, float, float, float, int);
+    callback linear-filter(int, int);
+    callback canny-edge(float, float);
+    callback two-argument-op(int, int);
+    callback two-stage-filter(float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, int);
 }

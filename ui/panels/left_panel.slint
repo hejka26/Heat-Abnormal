@@ -111,6 +111,21 @@ export component LeftPanel inherits SlidingPanel {
                         action: { right-menu: RightPanelState.Dilation }
                     },
                     {
+                        label: "Predefined Filters",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.LinearFilters }
+                    },
+                    {
+                        label: "Two Argument Op",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.TwoArgumentOp }
+                    },
+                    {
+                        label: "Two Stage Filter",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.TwoStageFilter }
+                    },
+                    {
                         label: "Custom Mask",
                         requirement: ImageStateReq.Any,
                         action: { right-menu: RightPanelState.CustomFilter }

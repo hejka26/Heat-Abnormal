@@ -3,15 +3,20 @@ import {
     GrayHistogramState,
     RGBHistogramState,
 } from "../global/event_bus.slint";
-import { Button, StyleMetrics, Slider, LineEdit } from "std-widgets.slint";
+import { Button, StyleMetrics, Slider, LineEdit, ComboBox } from "std-widgets.slint";
 import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
 import { RightPanelState } from "../widgets/right_panel_states.slint";
 import { Histogram } from "../widgets/histogram.slint";
 import { HistTable } from "../widgets/hist_table.slint";
+import { ImageStore } from "../global/image_data.slint";
 
 export component RightPanel inherits SlidingPanel {
     in-out property <RightPanelState> PanelState;
     property <string> title;
+
+    property <float> canny-low-val: 50;
+    property <float> canny-high-val: 150;
+    property <int> linear-border-idx: 0;
 
     side: PanelSide.Right;
     width: 750px;
@@ -306,13 +311,189 @@ export component RightPanel inherits SlidingPanel {
                 }
             }
 
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Border:"; vertical-alignment: center; }
+                border-combo := ComboBox {
+                    model: ["isolated", "replicate", "reflect"];
+                    current-index: 0;
+                }
+            }
+
             Button {
                 text: "Apply";
                 clicked => {
                     RustActions.custom-filter(
                         m00.text.to-float(), m01.text.to-float(), m02.text.to-float(),
                         m10.text.to-float(), m11.text.to-float(), m12.text.to-float(),
-                        m20.text.to-float(), m21.text.to-float(), m22.text.to-float()
+                        m20.text.to-float(), m21.text.to-float(), m22.text.to-float(),
+                        border-combo.current-index
+                    );
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.LinearFilters: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+            init() => { title = "Linear Filters"; }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Filter:"; vertical-alignment: center; }
+                filter-combo := ComboBox {
+                    model: ["Blur", "Sharpen", "Laplacian", "Sobel X", "Sobel Y", "Prewitt X", "Prewitt Y", "Canny"];
+                    current-index: 0;
+                }
+            }
+
+            if filter-combo.current-index == 7: VerticalLayout {
+                spacing: 10px;
+                HorizontalLayout {
+                    spacing: 10px;
+                    Text { text: "Low:"; vertical-alignment: center; }
+                    Slider { 
+                        minimum: 0; 
+                        maximum: 255; 
+                        value: root.canny-low-val;
+                        changed(v) => { root.canny-low-val = v; }
+                    }
+                }
+                HorizontalLayout {
+                    spacing: 10px;
+                    Text { text: "High:"; vertical-alignment: center; }
+                    Slider { 
+                        minimum: 0; 
+                        maximum: 255; 
+                        value: root.canny-high-val;
+                        changed(v) => { root.canny-high-val = v; }
+                    }
+                }
+            }
+
+            if filter-combo.current-index != 7: HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Border:"; vertical-alignment: center; }
+                linear-border-combo := ComboBox {
+                    model: ["isolated", "replicate", "reflect"];
+                    current-index: root.linear-border-idx;
+                    selected(s) => {
+                        if s == "isolated" { root.linear-border-idx = 0; }
+                        if s == "replicate" { root.linear-border-idx = 1; }
+                        if s == "reflect" { root.linear-border-idx = 2; }
+                    }
+                }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    if filter-combo.current-index == 7 {
+                        RustActions.canny-edge(root.canny-low-val, root.canny-high-val);
+                    } else {
+                        RustActions.linear-filter(filter-combo.current-index, root.linear-border-idx);
+                    }
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.TwoArgumentOp: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+            init() => { title = "Two Argument Operation"; }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Op:"; vertical-alignment: center; }
+                op-combo := ComboBox {
+                    model: ["Add", "Sub", "Blend", "AND", "OR", "XOR"];
+                    current-index: 0;
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Second Image:"; vertical-alignment: center; }
+                img-slider := Slider {
+                    minimum: 0;
+                    maximum: ImageStore.loaded-images.length - 1;
+                    value: 0;
+                }
+                Text { text: round(img-slider.value) + " (" + ImageStore.loaded-images[round(img-slider.value)].label + ")"; vertical-alignment: center; }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    RustActions.two-argument-op(op-combo.current-index, round(img-slider.value));
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.TwoStageFilter: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+            init() => { title = "Two Stage Filter (5x5)"; }
+
+            Text { text: "Mask 1 (3x3)"; }
+            GridLayout {
+                spacing: 2px;
+                a00 := LineEdit { text: "0.111"; width: 45px; }
+                a01 := LineEdit { text: "0.111"; width: 45px; }
+                a02 := LineEdit { text: "0.111"; width: 45px; }
+                Row {
+                    a10 := LineEdit { text: "0.111"; width: 45px; }
+                    a11 := LineEdit { text: "0.111"; width: 45px; }
+                    a12 := LineEdit { text: "0.111"; width: 45px; }
+                }
+                Row {
+                    a20 := LineEdit { text: "0.111"; width: 45px; }
+                    a21 := LineEdit { text: "0.111"; width: 45px; }
+                    a22 := LineEdit { text: "0.111"; width: 45px; }
+                }
+            }
+
+            Text { text: "Mask 2 (3x3)"; }
+            GridLayout {
+                spacing: 2px;
+                b00 := LineEdit { text: "0"; width: 45px; }
+                b01 := LineEdit { text: "-1"; width: 45px; }
+                b02 := LineEdit { text: "0"; width: 45px; }
+                Row {
+                    b10 := LineEdit { text: "-1"; width: 45px; }
+                    b11 := LineEdit { text: "5"; width: 45px; }
+                    b12 := LineEdit { text: "-1"; width: 45px; }
+                }
+                Row {
+                    b20 := LineEdit { text: "0"; width: 45px; }
+                    b21 := LineEdit { text: "-1"; width: 45px; }
+                    b22 := LineEdit { text: "0"; width: 45px; }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Border:"; vertical-alignment: center; }
+                ts-border-combo := ComboBox {
+                    model: ["isolated", "replicate", "reflect"];
+                    current-index: 0;
+                }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    RustActions.two-stage-filter(
+                        a00.text.to-float(), a01.text.to-float(), a02.text.to-float(),
+                        a10.text.to-float(), a11.text.to-float(), a12.text.to-float(),
+                        a20.text.to-float(), a21.text.to-float(), a22.text.to-float(),
+                        b00.text.to-float(), b01.text.to-float(), b02.text.to-float(),
+                        b10.text.to-float(), b11.text.to-float(), b12.text.to-float(),
+                        b20.text.to-float(), b21.text.to-float(), b22.text.to-float(),
+                        ts-border-combo.current-index
                     );
                 }
             }

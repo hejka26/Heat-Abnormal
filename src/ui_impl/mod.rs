@@ -145,12 +145,55 @@ pub fn setup_callbacks(ui: &MainWindow, images_model: &Rc<VecModel<ImageContaine
     ui.global::<RustActions>().on_custom_filter({
         let images_model = images_model.clone();
         let ui_handle = ui.as_weak();
-        move |m0, m1, m2, m3, m4, m5, m6, m7, m8| {
+        move |m0, m1, m2, m3, m4, m5, m6, m7, m8, border_type| {
             handle_action(|| {
                 actions::custom_filter(
                     &ui_handle,
                     &images_model,
                     [m0, m1, m2, m3, m4, m5, m6, m7, m8],
+                    border_type,
+                )
+            })
+        }
+    });
+
+    ui.global::<RustActions>().on_linear_filter({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |filter_type, border_type| {
+            handle_action(|| {
+                actions::linear_filter(&ui_handle, &images_model, filter_type, border_type)
+            })
+        }
+    });
+
+    ui.global::<RustActions>().on_canny_edge({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |low, high| {
+            handle_action(|| actions::canny_edge(&ui_handle, &images_model, low as f64, high as f64))
+        }
+    });
+
+    ui.global::<RustActions>().on_two_argument_op({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |op_type, second_idx| {
+            handle_action(|| actions::two_argument_op(&ui_handle, &images_model, op_type, second_idx))
+        }
+    });
+
+    ui.global::<RustActions>().on_two_stage_filter({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |a0, a1, a2, a3, a4, a5, a6, a7, a8, b0, b1, b2, b3, b4, b5, b6, b7, b8, border_type| {
+            handle_action(|| {
+                actions::two_stage_filter(
+                    &ui_handle,
+                    &images_model,
+                    [a0, a1, a2, a3, a4, a5, a6, a7, a8],
+                    [b0, b1, b2, b3, b4, b5, b6, b7, b8],
+                    border_type,
                 )
             })
         }
