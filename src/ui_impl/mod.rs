@@ -198,4 +198,36 @@ pub fn setup_callbacks(ui: &MainWindow, images_model: &Rc<VecModel<ImageContaine
             })
         }
     });
+
+    ui.global::<RustActions>().on_morphology({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |op_type, elem_type, iterations| {
+            handle_action(|| actions::morphology(&ui_handle, &images_model, op_type, elem_type, iterations))
+        }
+    });
+
+    ui.global::<RustActions>().on_hough_lines({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |rho, theta, threshold| {
+            handle_action(|| actions::hough_lines(&ui_handle, &images_model, rho as f64, theta as f64, threshold))
+        }
+    });
+
+    ui.global::<RustActions>().on_profile_line({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |x1, y1, x2, y2| {
+            handle_action(|| actions::profile_line(&ui_handle, &images_model, x1, y1, x2, y2))
+        }
+    });
+
+    ui.global::<RustActions>().on_image_pyramid({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |op_type| {
+            handle_action(|| actions::image_pyramid(&ui_handle, &images_model, op_type))
+        }
+    });
 }

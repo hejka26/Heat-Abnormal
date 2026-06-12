@@ -2,8 +2,9 @@ import {
     RustActions,
     GrayHistogramState,
     RGBHistogramState,
+    ProfileLineState,
 } from "../global/event_bus.slint";
-import { Button, StyleMetrics, Slider, LineEdit, ComboBox } from "std-widgets.slint";
+import { Button, StyleMetrics, Slider, LineEdit, ComboBox, Palette } from "std-widgets.slint";
 import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
 import { RightPanelState } from "../widgets/right_panel_states.slint";
 import { Histogram } from "../widgets/histogram.slint";
@@ -375,7 +376,7 @@ export component RightPanel inherits SlidingPanel {
             if filter-combo.current-index != 7: HorizontalLayout {
                 spacing: 10px;
                 Text { text: "Border:"; vertical-alignment: center; }
-                linear-border-combo := ComboBox {
+                ComboBox {
                     model: ["isolated", "replicate", "reflect"];
                     current-index: root.linear-border-idx;
                     selected(s) => {
@@ -495,6 +496,135 @@ export component RightPanel inherits SlidingPanel {
                         b20.text.to-float(), b21.text.to-float(), b22.text.to-float(),
                         ts-border-combo.current-index
                     );
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.Morphology: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+            init() => { title = "Morphology"; }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Op:"; vertical-alignment: center; }
+                morph-op-combo := ComboBox {
+                    model: ["Erode", "Dilate", "Open", "Close"];
+                    current-index: 0;
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Element:"; vertical-alignment: center; }
+                morph-elem-combo := ComboBox {
+                    model: ["Rectangle", "Cross", "Ellipse"];
+                    current-index: 0;
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Iterations: " + round(morph-iter-slider.value); vertical-alignment: center; }
+                morph-iter-slider := Slider { minimum: 1; maximum: 10; value: 1; }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    RustActions.morphology(morph-op-combo.current-index, morph-elem-combo.current-index, round(morph-iter-slider.value));
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.HoughTransform: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+            init() => { title = "Hough Transform"; }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Rho: " + round(rho-slider.value * 10)/10; width: 80px; }
+                rho-slider := Slider { minimum: 0.1; maximum: 5.0; value: 1.0; }
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Theta: " + round(theta-slider.value); width: 80px; }
+                theta-slider := Slider { minimum: 1; maximum: 180; value: 1; }
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text { text: "Threshold: " + round(hough-thresh-slider.value); width: 100px; }
+                hough-thresh-slider := Slider { minimum: 10; maximum: 500; value: 100; }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    RustActions.hough-lines(rho-slider.value, theta-slider.value, round(hough-thresh-slider.value));
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.ProfileLine: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+            init() => { title = "Profile Line"; }
+
+            GridLayout {
+                spacing: 10px;
+                Text { text: "X1:"; } x1-edit := LineEdit { text: "0"; width: 60px; }
+                Text { text: "Y1:"; } y1-edit := LineEdit { text: "0"; width: 60px; }
+                Row {
+                    Text { text: "X2:"; } x2-edit := LineEdit { text: "100"; width: 60px; }
+                    Text { text: "Y2:"; } y2-edit := LineEdit { text: "100"; width: 60px; }
+                }
+            }
+
+            Button {
+                text: "Calculate Profile";
+                clicked => {
+                    RustActions.profile-line(x1-edit.text.to-float(), y1-edit.text.to-float(), x2-edit.text.to-float(), y2-edit.text.to-float());
+                }
+            }
+
+            Rectangle {
+                height: 200px;
+                background: Palette.alternate-background;
+                border-radius: 4px;
+                
+                HorizontalLayout {
+                    padding: 4px;
+                    spacing: 1px;
+                    for val in ProfileLineState.data: Rectangle {
+                        y: parent.height - self.height;
+                        height: parent.height * (val / ProfileLineState.max-value);
+                        background: Palette.accent-background;
+                    }
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.ImagePyramid: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+            init() => { title = "Image Pyramid"; }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Button {
+                    text: "Pyr Down (1/2)";
+                    clicked => { RustActions.image-pyramid(0); }
+                }
+                Button {
+                    text: "Pyr Up (2x)";
+                    clicked => { RustActions.image-pyramid(1); }
                 }
             }
         }

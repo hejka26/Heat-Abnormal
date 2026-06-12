@@ -44,7 +44,6 @@ export component LeftPanel inherits SlidingPanel {
                     label: "About",
                     action: { rust-action: RustAction.ShowAbout }
                 }
-                // { label: "Duplicate", requirement: ImageStateReq.Any, action: { } }
             ],
             },
             {
@@ -124,6 +123,26 @@ export component LeftPanel inherits SlidingPanel {
                         label: "Two Stage Filter",
                         requirement: ImageStateReq.Any,
                         action: { right-menu: RightPanelState.TwoStageFilter }
+                    },
+                    {
+                        label: "Morphology",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.Morphology }
+                    },
+                    {
+                        label: "Hough Transform",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.HoughTransform }
+                    },
+                    {
+                        label: "Profile Line",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.ProfileLine }
+                    },
+                    {
+                        label: "Image Pyramid",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.ImagePyramid }
                     },
                     {
                         label: "Custom Mask",

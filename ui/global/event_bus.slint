@@ -11,6 +11,10 @@ export global RGBHistogramState {
     in property <[float]> max-value: [100];
 }
 
+export global ProfileLineState {
+    in property <[float]> data: [0];
+    in property <float> max-value: 255;
+}
 
 export global RustActions {
     callback open-file();
@@ -36,4 +40,8 @@ export global RustActions {
     callback canny-edge(float, float);
     callback two-argument-op(int, int);
     callback two-stage-filter(float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, int);
+    callback morphology(int, int, int);
+    callback hough-lines(float, float, int);
+    callback profile-line(int, int, int, int);
+    callback image-pyramid(int);
 }

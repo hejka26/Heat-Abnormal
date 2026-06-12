@@ -7,7 +7,143 @@ use opencv::{
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::rc::Rc;
 
-use crate::{GrayHistogramState, ImageContainer, ImageStore, MainWindow};
+use crate::{GrayHistogramState, ImageContainer, ImageStore, MainWindow, ProfileLineState};
+
+
+
+pub fn morphology(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    op_type: i32,
+    elem_type: i32,
+    iterations: i32,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+    let mat = if img.color { helper::slint_to_rgb(&img.img)? } else { helper::slint_to_gray(&img.img)? };
+    
+    let shape = match elem_type {
+        0 => imgproc::MORPH_RECT,
+        1 => imgproc::MORPH_CROSS,
+        2 => imgproc::MORPH_ELLIPSE,
+        _ => imgproc::MORPH_RECT,
+    };
+    
+    let element = imgproc::get_structuring_element(shape, opencv::core::Size::new(3, 3), opencv::core::Point::new(-1, -1))
+        .map_err(|e| e.to_string())?;
+    
+    let mut result = Mat::default();
+    match op_type {
+        0 => imgproc::erode(&mat, &mut result, &element, opencv::core::Point::new(-1, -1), iterations, opencv::core::BORDER_CONSTANT, imgproc::morphology_default_border_value().unwrap()).map_err(|e| e.to_string())?,
+        1 => imgproc::dilate(&mat, &mut result, &element, opencv::core::Point::new(-1, -1), iterations, opencv::core::BORDER_CONSTANT, imgproc::morphology_default_border_value().unwrap()).map_err(|e| e.to_string())?,
+        2 => imgproc::morphology_ex(&mat, &mut result, imgproc::MORPH_OPEN, &element, opencv::core::Point::new(-1, -1), iterations, opencv::core::BORDER_CONSTANT, imgproc::morphology_default_border_value().unwrap()).map_err(|e| e.to_string())?,
+        3 => imgproc::morphology_ex(&mat, &mut result, imgproc::MORPH_CLOSE, &element, opencv::core::Point::new(-1, -1), iterations, opencv::core::BORDER_CONSTANT, imgproc::morphology_default_border_value().unwrap()).map_err(|e| e.to_string())?,
+        _ => return Err("Unknown morphology op".to_string()),
+    }
+    
+    img.img = if img.color { helper::rgb_to_slint(&result)? } else { helper::gray_to_slint(&result)? };
+    images_model.set_row_data(selected_idx, img);
+    Ok(())
+}
+
+pub fn hough_lines(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    rho: f64,
+    theta: f64,
+    threshold: i32,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+    let gray = helper::slint_to_gray(&img.img)?;
+    let mut edges = Mat::default();
+    imgproc::canny(&gray, &mut edges, 50.0, 150.0, 3, false).map_err(|e| e.to_string())?;
+    
+    let mut lines = opencv::core::Vector::<opencv::core::Vec2f>::new();
+    imgproc::hough_lines_def(&edges, &mut lines, rho, theta * std::f64::consts::PI / 180.0, threshold).map_err(|e| e.to_string())?;
+    
+    let mut color_img = helper::slint_to_rgb(&img.img)?;
+    for line in lines {
+        let r = line[0];
+        let t = line[1];
+        let a = t.cos();
+        let b = t.sin();
+        let x0 = a * r;
+        let y0 = b * r;
+        let pt1 = opencv::core::Point::new((x0 + 1000.0_f32 * (-b)) as i32, (y0 + 1000.0_f32 * (a)) as i32);
+        let pt2 = opencv::core::Point::new((x0 - 1000.0_f32 * (-b)) as i32, (y0 - 1000.0_f32 * (a)) as i32);
+        imgproc::line(&mut color_img, pt1, pt2, opencv::core::Scalar::new(0.0, 0.0, 255.0, 0.0), 2, imgproc::LINE_8, 0).map_err(|e| e.to_string())?;
+    }
+    
+    img.img = helper::rgb_to_slint(&color_img)?;
+    img.color = true;
+    images_model.set_row_data(selected_idx, img);
+    Ok(())
+}
+
+fn bresenham(mut x0: i32, mut y0: i32, x1: i32, y1: i32) -> Vec<(i32, i32)> {
+    let mut result = Vec::new();
+    let dx = (x1 - x0).abs();
+    let sx = if x0 < x1 { 1 } else { -1 };
+    let dy = -(y1 - y0).abs();
+    let sy = if y0 < y1 { 1 } else { -1 };
+    let mut err = dx + dy;
+    loop {
+        result.push((x0, y0));
+        if x0 == x1 && y0 == y1 { break; }
+        let e2 = 2 * err;
+        if e2 >= dy { err += dy; x0 += sx; }
+        if e2 <= dx { err += dx; y0 += sy; }
+    }
+    result
+}
+
+pub fn profile_line(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
+) -> Result<(), String> {
+    let (ui, _, img) = helper::get_current_image(ui_handle, images_model)?;
+    let gray = helper::slint_to_gray(&img.img)?;
+    
+    let mut data = Vec::new();
+    let points = bresenham(x1, y1, x2, y2);
+    
+    let cols = gray.cols();
+    let rows = gray.rows();
+
+    for (x, y) in points {
+        if x >= 0 && x < cols && y >= 0 && y < rows {
+            let pixel_val = *gray.at_2d::<u8>(y, x).unwrap_or(&0);
+            data.push(pixel_val as f32);
+        }
+    }
+    
+    let profile_ui = ui.global::<ProfileLineState>();
+    profile_ui.set_data(ModelRc::from(Rc::new(VecModel::from(data))));
+    Ok(())
+}
+
+pub fn image_pyramid(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    op_type: i32,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+    let mat = if img.color { helper::slint_to_rgb(&img.img)? } else { helper::slint_to_gray(&img.img)? };
+    
+    let mut result = Mat::default();
+    if op_type == 0 {
+        imgproc::pyr_down(&mat, &mut result, opencv::core::Size::default(), opencv::core::BORDER_DEFAULT).map_err(|e| e.to_string())?;
+    } else {
+        imgproc::pyr_up(&mat, &mut result, opencv::core::Size::default(), opencv::core::BORDER_DEFAULT).map_err(|e| e.to_string())?;
+    }
+    
+    img.img = if img.color { helper::rgb_to_slint(&result)? } else { helper::gray_to_slint(&result)? };
+    images_model.set_row_data(selected_idx, img);
+    Ok(())
+}
 
 pub fn open_file(
     ui_handle: &Weak<MainWindow>,
@@ -789,7 +925,7 @@ pub fn two_argument_op(
     op_type: i32,
     second_img_idx: i32,
 ) -> Result<(), String> {
-    let (ui, selected_idx, mut img1_cont) = helper::get_current_image(ui_handle, images_model)?;
+    let (_ui, selected_idx, mut img1_cont) = helper::get_current_image(ui_handle, images_model)?;
     if second_img_idx < 0 || second_img_idx as usize >= images_model.row_count() {
         return Err("Invalid second image index".to_string());
     }
@@ -832,7 +968,6 @@ pub fn two_stage_filter(
     let kernel2 = Mat::new_rows_cols_with_data(3, 3, &m2).map_err(|e| e.to_string())?;
     
     // Combine two 3x3 kernels into one 5x5 using convolution
-    let mut kernel5x5 = Mat::default();
     // OpenCV filter2D can convolve two kernels if we treat them as images
     // But it's easier to just apply them sequentially or use a 5x5.
     // Spec says: "maska 5x5 utworzonej na podstawie dwóch masek 3x3"
