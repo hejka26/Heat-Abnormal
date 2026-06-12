@@ -121,6 +121,38 @@ pub fn close_file(
     Ok(())
 }
 
+pub fn segment(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    threshold: u8,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+
+    if img.color {
+        return Err("Thresholding requires a grayscale image".to_string());
+    }
+
+    let mat = helper::slint_to_gray(&img.img)?;
+    let mut binary = Mat::default();
+    imgproc::threshold(
+        &mat,
+        &mut binary,
+        threshold as f64,
+        255.0,
+        imgproc::THRESH_BINARY,
+    )
+    .map_err(|e| format!("Thresholding failed: {}", e))?;
+
+    img.img = helper::gray_to_slint(&binary)?;
+    images_model.set_row_data(selected_idx, img.clone());
+
+    if !img.color {
+        let _ = calculate_gray_histogram(ui_handle, images_model);
+    }
+
+    Ok(())
+}
+
 pub fn convert_color(
     ui_handle: &Weak<MainWindow>,
     images_model: &Rc<VecModel<ImageContainer>>,
@@ -145,8 +177,9 @@ pub fn calculate_gray_histogram(
     let (ui, _, img) = helper::get_current_image(ui_handle, images_model)?;
 
     if img.color {
-        return Err("Img is colored".to_string());
+        return Err("Histogram requires a grayscale image".to_string());
     }
+
     let mat = helper::slint_to_gray(&img.img)?;
     let mut data = vec![0.0f32; 256];
     let pixels = mat
@@ -345,39 +378,55 @@ pub fn skeletonize(
 pub fn selective_stretch(
     ui_handle: &Weak<MainWindow>,
     images_model: &Rc<VecModel<ImageContainer>>,
-    min_in: u8,
-    max_in: u8,
+    min_out: u8,
+    max_out: u8,
 ) -> Result<(), String> {
     let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
 
     if img.color {
-        return Err("Img is colored".to_string());
+        return Err("Stretch requires a grayscale image".to_string());
     }
 
-    if min_in >= max_in {
-        return Err("Max is smaller equal to min".to_string());
+    if min_out >= max_out {
+        return Err("Max must be greater than min".to_string());
     }
 
     let Some(buffer) = img.img.to_rgb8() else {
-        return Err("Couldn't retrive image".to_string());
+        return Err("Couldn't retrieve image buffer".to_string());
     };
     let width = buffer.width();
     let height = buffer.height();
 
-    let mut lut = [0u8; 256];
-    let min_f32 = min_in as f32;
-    let max_f32 = max_in as f32;
+    // Find actual min and max in the image
+    let mut actual_min = 255u8;
+    let mut actual_max = 0u8;
+    for pixel in buffer.as_slice() {
+        let v = pixel.r;
+        if v < actual_min { actual_min = v; }
+        if v > actual_max { actual_max = v; }
+    }
 
-    (0..=255).for_each(|i| {
-        if i <= min_in as usize {
-            lut[i] = 0;
-        } else if i >= max_in as usize {
-            lut[i] = 255;
+    if actual_min >= actual_max {
+        return Ok(()); // Image is uniform, nothing to stretch
+    }
+
+    let mut lut = [0u8; 256];
+    let a = actual_min as f32;
+    let b = actual_max as f32;
+    let c = min_out as f32;
+    let d = max_out as f32;
+
+    for i in 0..=255 {
+        if i <= actual_min as usize {
+            lut[i] = min_out;
+        } else if i >= actual_max as usize {
+            lut[i] = max_out;
         } else {
-            let v = ((i as f32 - min_f32) / (max_f32 - min_f32) * 255.0).round();
+            // Map [actual_min, actual_max] -> [min_out, max_out]
+            let v = ((i as f32 - a) / (b - a) * (d - c) + c).round();
             lut[i] = v.clamp(0.0, 255.0) as u8;
         }
-    });
+    }
 
     let mut new_buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(width, height);
     let old_slice = buffer.as_slice();
@@ -453,5 +502,123 @@ pub fn posterize(
         let _ = calculate_gray_histogram(ui_handle, images_model);
     }
 
+    Ok(())
+}
+
+pub fn median_filter(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    kernel_size: i32,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+
+    let mat = if img.color {
+        helper::slint_to_rgb(&img.img)?
+    } else {
+        helper::slint_to_gray(&img.img)?
+    };
+
+    let mut filtered = Mat::default();
+    imgproc::median_blur(&mat, &mut filtered, kernel_size)
+        .map_err(|e| format!("Median blur failed: {}", e))?;
+
+    img.img = if img.color {
+        helper::rgb_to_slint(&filtered)?
+    } else {
+        helper::gray_to_slint(&filtered)?
+    };
+
+    images_model.set_row_data(selected_idx, img.clone());
+    if !img.color {
+        let _ = calculate_gray_histogram(ui_handle, images_model);
+    }
+    Ok(())
+}
+
+pub fn dilate(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    iterations: i32,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+
+    let mat = if img.color {
+        helper::slint_to_rgb(&img.img)?
+    } else {
+        helper::slint_to_gray(&img.img)?
+    };
+
+    let element = imgproc::get_structuring_element(
+        imgproc::MORPH_RECT,
+        opencv::core::Size::new(3, 3),
+        opencv::core::Point::new(-1, -1),
+    )
+    .map_err(|e| e.to_string())?;
+
+    let mut dilated = Mat::default();
+    imgproc::dilate(
+        &mat,
+        &mut dilated,
+        &element,
+        opencv::core::Point::new(-1, -1),
+        iterations,
+        opencv::core::BORDER_CONSTANT,
+        imgproc::morphology_default_border_value()
+            .map_err(|e| format!("Failed to get border value: {}", e))?,
+    )
+    .map_err(|e| format!("Dilation failed: {}", e))?;
+
+    img.img = if img.color {
+        helper::rgb_to_slint(&dilated)?
+    } else {
+        helper::gray_to_slint(&dilated)?
+    };
+
+    images_model.set_row_data(selected_idx, img.clone());
+    if !img.color {
+        let _ = calculate_gray_histogram(ui_handle, images_model);
+    }
+    Ok(())
+}
+
+pub fn custom_filter(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    mask: [f32; 9],
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+
+    let mat = if img.color {
+        helper::slint_to_rgb(&img.img)?
+    } else {
+        helper::slint_to_gray(&img.img)?
+    };
+
+    // Create a 3x3 kernel from the mask
+    let kernel = Mat::new_rows_cols_with_data(3, 3, &mask)
+        .map_err(|e| format!("Failed to create kernel: {}", e))?;
+
+    let mut filtered = Mat::default();
+    imgproc::filter_2d(
+        &mat,
+        &mut filtered,
+        -1,
+        &kernel,
+        opencv::core::Point::new(-1, -1),
+        0.0,
+        opencv::core::BORDER_DEFAULT,
+    )
+    .map_err(|e| format!("Filter2D failed: {}", e))?;
+
+    img.img = if img.color {
+        helper::rgb_to_slint(&filtered)?
+    } else {
+        helper::gray_to_slint(&filtered)?
+    };
+
+    images_model.set_row_data(selected_idx, img.clone());
+    if !img.color {
+        let _ = calculate_gray_histogram(ui_handle, images_model);
+    }
     Ok(())
 }

@@ -35,131 +35,152 @@ export component LeftPanel inherits SlidingPanel {
                     requirement: ImageStateReq.Any,
                     action: { rust-action: RustAction.SaveFile }
                 },
-                { label: "Duplicate", requirement: ImageStateReq.Any, action: { } }
+                // { label: "Duplicate", requirement: ImageStateReq.Any, action: { } }
             ],
-        },
-        {
-            label: "Transform",
-            submenu: [
-                {
-                    label: "Convert Colorspace",
-                    requirement: ImageStateReq.Any,
-                    action: { rust-action: RustAction.ConvertColor }
-                },
-                {
-                    label: "Equalize Histogram",
-                    requirement: ImageStateReq.Gray,
-                    action: { rust-action: RustAction.EqualizeHistogram }
-                },
-                {
-                    label: "Skeletonize",
-                    requirement: ImageStateReq.Gray,
-                    action: { rust-action: RustAction.Skeletonize }
-                },
-                {
-                    label: "Stretch Histogram",
-                    requirement: ImageStateReq.Gray,
-                    action: { right-menu: RightPanelState.StretchHistogram }
-                },
-                {
-                    label: "Posterize",
-                    requirement: ImageStateReq.Any,
-                    action: { right-menu: RightPanelState.Posterize }
-                }
-            ],
-        },
-        {
-            label: "Analyze",
-            submenu: [
-                {
-                    label: "Histogram",
-                    requirement: ImageStateReq.Gray,
-                    action: { right-menu: RightPanelState.Histogram }
-                },
-                {
-                    label: "Table",
-                    requirement: ImageStateReq.Gray,
-                    action: { right-menu: RightPanelState.HistogramTable }
-                }
-            ],
-        },
-    ];
+            },
+            {
+                label: "Transform",
+                submenu: [
+                    {
+                        label: "Convert Colorspace",
+                        requirement: ImageStateReq.Any,
+                        action: { rust-action: RustAction.ConvertColor }
+                    },
+                    {
+                        label: "Equalize Histogram",
+                        requirement: ImageStateReq.Gray,
+                        action: { rust-action: RustAction.EqualizeHistogram }
+                    },
+                    {
+                        label: "Skeletonize",
+                        requirement: ImageStateReq.Gray,
+                        action: { rust-action: RustAction.Skeletonize }
+                    },
+                    {
+                        label: "Stretch Histogram",
+                        requirement: ImageStateReq.Gray,
+                        action: { right-menu: RightPanelState.StretchHistogram }
+                    },
+                    {
+                        label: "Posterize",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.Posterize }
+                    },
+                    {
+                        label: "Thresholding",
+                        requirement: ImageStateReq.Gray,
+                        action: { right-menu: RightPanelState.ThresholdSegmentation }
+                    },
+                    {
+                        label: "Median Filter",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.MedianFilter }
+                    },
+                    {
+                        label: "Dilation",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.Dilation }
+                    },
+                    {
+                        label: "Custom Mask",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.CustomFilter }
+                    }
+                ],
+            },
+            {
+                label: "Analyze",
+                submenu: [
+                    {
+                        label: "Histogram",
+                        requirement: ImageStateReq.Gray,
+                        action: { right-menu: RightPanelState.Histogram }
+                    },
+                    {
+                        label: "Table",
+                        requirement: ImageStateReq.Gray,
+                        action: { right-menu: RightPanelState.HistogramTable }
+                    }
+                ],
+            },
+        ];
 
-    callback set-right-menu(RightPanelState);
+        callback set-right-menu(RightPanelState);
 
-    // Initialize SlidingPanel properties directly
+        // Initialize SlidingPanel properties directly
     side: PanelSide.Left;
-    width: 220px;
+        width: 220px;
 
-    VerticalLayout {
-        padding: StyleMetrics.layout-padding;
-        spacing: StyleMetrics.layout-spacing;
-        alignment: start;
-
-        HorizontalLayout {
-            vertical-stretch: 0;
-            alignment: space-between;
-            Button {
-                text: "🗙";
-
-                clicked => {
-                    root.close-panel()
-                }
-            }
-        }
-
-        for item[index] in root.main-menu-items: VerticalLayout {
+        VerticalLayout {
+            padding: StyleMetrics.layout-padding;
             spacing: StyleMetrics.layout-spacing;
-            //TODO: Make this look more like a submenu container while still sticking to styles :/
-            Button {
-                text: item.label;
+            alignment: start;
 
-                clicked => {
-                    if item.submenu.length != 0 {
-                        if active_sub_menu == index {
-                            active_sub_menu = -1
-                        } else {
-                            active_sub_menu = index;
-                        }
+            HorizontalLayout {
+                vertical-stretch: 0;
+                alignment: space-between;
+                Button {
+                    text: "🗙";
+
+                    clicked => {
+                        root.close-panel()
                     }
                 }
             }
 
-            Rectangle {
-                clip: true;
-                height: index == root.active_sub_menu ? submenu-layout.preferred-height : 0px;
+            for item[index] in root.main-menu-items: VerticalLayout {
+                spacing: StyleMetrics.layout-spacing;
+            //TODO: Make this look more like a submenu container while still sticking to styles :/
+            Button {
+                    text: item.label;
 
-                animate height {
-                    duration: 300ms;
-                    easing: ease-in-out;
+                    clicked => {
+                        if item.submenu.length != 0 {
+                            if active_sub_menu == index {
+                                active_sub_menu = -1
+                            } else {
+                                active_sub_menu = index;
+                            }
+                        }
+                    }
                 }
 
-                submenu-layout := VerticalLayout {
-                    padding-left: StyleMetrics.layout-padding;
-                    spacing: StyleMetrics.layout-spacing;
+                Rectangle {
+                    clip: true;
+                    height: index == root.active_sub_menu ? submenu-layout.preferred-height : 0px;
 
-                    for sub-item in item.submenu: Button {
-                        text: sub-item.label;
-                        enabled: ImageStore.is-requirement-met(sub-item.requirement);
-                        clicked => {
-                            if sub-item.action.right-menu != RightPanelState.KeepState {
-                                set-right-menu(sub-item.action.right-menu);
-                                active-sub-menu = -1;
-                            }
-                            if sub-item.action.rust-action == RustAction.OpenFile {
-                                RustActions.open-file();
-                            }
-                            if sub-item.action.rust-action == RustAction.SaveFile {
-                                RustActions.save-file();
-                            }
-                            if sub-item.action.rust-action == RustAction.ConvertColor {
-                                RustActions.convert-color();
-                            }
-                            if sub-item.action.rust-action == RustAction.EqualizeHistogram {
-                                RustActions.equalize-histogram();
-                            }
-                            if sub-item.action.rust-action == RustAction.Skeletonize {
-                                RustActions.skeletonize();
+                    animate height {
+                        duration: 300ms;
+                        easing: ease-in-out;
+                    }
+
+                    submenu-layout := VerticalLayout {
+                        padding-left: StyleMetrics.layout-padding;
+                        spacing: StyleMetrics.layout-spacing;
+
+                        for sub-item in item.submenu: Button {
+                            text: sub-item.label;
+                            enabled: ImageStore.is-requirement-met(sub-item.requirement);
+                            clicked => {
+                                if sub-item.action.right-menu != RightPanelState.KeepState {
+                                    set-right-menu(sub-item.action.right-menu);
+                                    active-sub-menu = -1;
+                                }
+                                if sub-item.action.rust-action == RustAction.OpenFile {
+                                    RustActions.open-file();
+                                }
+                                if sub-item.action.rust-action == RustAction.SaveFile {
+                                    RustActions.save-file();
+                                }
+                                if sub-item.action.rust-action == RustAction.ConvertColor {
+                                    RustActions.convert-color();
+                                }
+                                if sub-item.action.rust-action == RustAction.EqualizeHistogram {
+                                    RustActions.equalize-histogram();
+                                }
+                                if sub-item.action.rust-action == RustAction.Skeletonize {
+                                    RustActions.skeletonize();
+                                }
                             }
                         }
                     }
@@ -167,4 +188,3 @@ export component LeftPanel inherits SlidingPanel {
             }
         }
     }
-}

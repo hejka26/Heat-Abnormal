@@ -3,7 +3,7 @@ import {
     GrayHistogramState,
     RGBHistogramState,
 } from "../global/event_bus.slint";
-import { Button, StyleMetrics, Slider } from "std-widgets.slint";
+import { Button, StyleMetrics, Slider, LineEdit } from "std-widgets.slint";
 import { SlidingPanel, PanelSide } from "./sliding_panel.slint";
 import { RightPanelState } from "../widgets/right_panel_states.slint";
 import { Histogram } from "../widgets/histogram.slint";
@@ -145,6 +145,140 @@ export component RightPanel inherits SlidingPanel {
                 text: "Apply";
                 clicked => {
                     RustActions.posterize(round(levels-slider.value));
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.ThresholdSegmentation: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+
+            init() => {
+                title = "Thresholding Segmentation";
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text {
+                    text: "Threshold: " + round(threshold-slider.value);
+                    width: 100px;
+                    vertical-alignment: center;
+                }
+
+                threshold-slider := Slider {
+                    minimum: 0;
+                    maximum: 255;
+                    value: 128;
+                }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    RustActions.segment(round(threshold-slider.value));
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.MedianFilter: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+
+            init() => {
+                title = "Median Filter";
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text {
+                    text: "Kernel Size: " + (round(kernel-slider.value) * 2 + 1);
+                    width: 120px;
+                    vertical-alignment: center;
+                }
+
+                kernel-slider := Slider {
+                    minimum: 1;
+                    maximum: 5;
+                    value: 1;
+                }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    RustActions.median-filter(round(kernel-slider.value) * 2 + 1);
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.Dilation: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+
+            init() => {
+                title = "Dilation";
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text {
+                    text: "Iterations: " + round(iter-slider.value);
+                    width: 100px;
+                    vertical-alignment: center;
+                }
+
+                iter-slider := Slider {
+                    minimum: 1;
+                    maximum: 10;
+                    value: 1;
+                }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    RustActions.dilate(round(iter-slider.value));
+                }
+            }
+        }
+
+        if PanelState == RightPanelState.CustomFilter: VerticalLayout {
+            spacing: 15px;
+            alignment: center;
+            vertical-stretch: 1;
+
+            init() => {
+                title = "Custom Mask (3x3)";
+            }
+
+            GridLayout {
+                spacing: 5px;
+                m00 := LineEdit { text: "0"; placeholder-text: "0"; width: 60px; }
+                m01 := LineEdit { text: "0"; placeholder-text: "0"; width: 60px; }
+                m02 := LineEdit { text: "0"; placeholder-text: "0"; width: 60px; }
+                Row {
+                    m10 := LineEdit { text: "0"; placeholder-text: "0"; width: 60px; }
+                    m11 := LineEdit { text: "1"; placeholder-text: "1"; width: 60px; }
+                    m12 := LineEdit { text: "0"; placeholder-text: "0"; width: 60px; }
+                }
+                Row {
+                    m20 := LineEdit { text: "0"; placeholder-text: "0"; width: 60px; }
+                    m21 := LineEdit { text: "0"; placeholder-text: "0"; width: 60px; }
+                    m22 := LineEdit { text: "0"; placeholder-text: "0"; width: 60px; }
+                }
+            }
+
+            Button {
+                text: "Apply";
+                clicked => {
+                    RustActions.custom-filter(
+                        m00.text.to-float(), m01.text.to-float(), m02.text.to-float(),
+                        m10.text.to-float(), m11.text.to-float(), m12.text.to-float(),
+                        m20.text.to-float(), m21.text.to-float(), m22.text.to-float()
+                    );
                 }
             }
         }

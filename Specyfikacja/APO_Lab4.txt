@@ -1,0 +1,360 @@
+2025-04-16
+
+ALGORYTMY PRZETWARZANIA
+OBRAZÓW
+
+Segmentacja
+(adaptacyjna & Otsu)
+
+Lab 4
+Łukasz Roszkowiak
+
+Zadanie
+Opracować algorytm i uruchomić aplikację
+realizującą segmentację obrazów 3 metodami:
+• Ręcznie (interakcyjnie) wyznaczony próg
+(thresholding)
+• Progowanie adaptacyjne (adaptive
+thresholding)
+• Progowanie metodą Otsu
+
+Progowanie adaptacyjne
+• lokalne progowanie,
+• próg wyznaczany na
+podstawie otoczenia
+• schemat okna
+przesuwnego
+
+Thresholding
+
+• Wartości powyżej ustalonego progu p1 przyjmują
+wartość 1 (lub 255),
+a wartości poniżej progu przyjmują wartość 0.
+• UWAGA! Należy pamiętać aby w programach,
+umożliwić użytkownikowi:
+– interaktywny dobór progu (najlepiej z aktywnym
+podglądem)
+– konwersję obrazu kolorowego do szaroodcieniowego
+
+Metoda Otsu
+• Automatyczny dobór wartości progu
+• Skuteczny przy obrazach o histogramie
+bimodalnym
+• Progowanie globalne
+
+*[Image source: https://docs.opencv.org/master/d7/d4d/tutorial_py_thresholding.html]
+
+*[Image source: https://docs.opencv.org/master/d7/d4d/tutorial_py_thresholding.html]
+
+1
+
+2025-04-16
+
+Zadanie
+
+Segmentacja GrabCut
+
+Opracować algorytm i uruchomić aplikację
+realizującą segmentację metodą GrabCut.
+Aplikację proszę przetestować na obrazach,
+zawierających obiekt na jednolitym tle.
+
+https://doi.org/10.1145/1015706.1015720
+
+GrabCut – zasada działania
+
+GrabCut - przykład
+• Wydobycie obiektu („foreground”) przez
+usunięcie tła („background”)
+
+https://www.cs.ru.ac.za/research/g02m1682/
+
+GrabCut – OpenCV (1)
+
+GrabCut – OpenCV (2)
+
+• cv2.grabCut(image, mask, rectangle,
+backgroundModel, foregroundModel, num_iter,
+cv2.GC_INIT_WITH_RECT)
+– image – obraz wejściowy
+– mask – maska wyjściowa (zera; rozmiar jak image)
+– rectangle – bounding box obiektu zainteresowania
+– backgroundModel – np.zeros((1, 65), np.float64)
+– num_iter – iteracje metody (przykładowo 3)
+– cv2.GC_INIT_WITH_RECT – stała z opencv ponieważ
+używamy rectangle
+
+2
+
+2025-04-16
+
+GrabCut – w programie
+• Użytkownik podaje:
+– obraz wejściowy - image
+– prostokąt zawierający obiekt zainteresowania
+(startingPoint_x, startingPoint_y, width, height) –
+rectangle
+
+Algorytm Watershed
+
+• albo jako rysowany na obrazie
+• albo jako obraz maski
+
+Zadanie
+Opracować algorytm i uruchomić aplikację
+realizującą segmentację metodą wododziałową
+(watershed). Aplikację proszę przetestować na
+obrazach, zawierających połączone („sklejone”)
+obiekty.
+
+Watershed
+• Jeśli za wysokość terenu przyjmuje się
+intensywność pikseli,
+to za wododział – grzbiety tych funkcji.
+• Obszary o małej intensywności stanowią w
+obrazie lokalne „doliny”
+• Obszary o dużej intensywności – lokalne
+„wzniesienia”
+
+*[Image source: https://media.arxiv-vanity.com/render-output/4644354/figures/ws1.png]
+
+Zadanie
+
+Metoda Inpainting
+
+Opracować algorytm i uruchomić aplikację
+realizującą metodę Inpainting. Aplikację proszę
+przetestować na obrazach, zawierających
+pojedyncze linie/odcinki w kolorze czarnym lub
+białym naniesione na obraz.
+
+3
+
+2025-04-16
+
+Inpainting - przykład
+
+https://www.geeksforgeeks.org/image-inpainting-using-opencv/
+
+Inpainting – przykład 2
+
+https://learnopencv.com/image-inpainting-with-opencv-c-python/
+
+Podstawy Inpainting
+
+Inpainting - OpenCV
+
+• Dwie publikacje naukowe:
+• “An Image Inpainting Technique Based on the Fast
+Marching Method”, Alexandru Telea, 2004,
+https://doi.org/10.1109/CVPR.2001.990497
+• “Navier-Stokes, Fluid Dynamics, and Image and
+Video Inpainting”, Bertalmio, Marcelo, Andrea L.
+Bertozzi, and Guillermo Sapiro, 2001,
+http://dx.doi.org/10.1080/10867651.2004.10487
+596
+
+• dst =
+cv2.inpaint(img,mask,iter,cv2.INPAINT_TELEA)
+– img – obraz wejściowy
+– mask – maska zawierajaca obszary do pokrycia
+– iter – iteracje metody (przykładowo 3)
+– stała odpowiedzialna za użytą metodę:
+• cv2.INPAINT_TELEA
+• cv2.INPAINT_NS
+
+Inpainting – w programie
+• Użytkownik podaje:
+– obraz wejściowy – image
+– maskę obszarów do uzupełnienia
+
+Kompresja RLE
+
+4
+
+2025-04-16
+
+Zadanie
+Opracować algorytm i uruchomić aplikację
+realizującą kompresję obrazów metodą RLE:
+• Zapis obrazu:
+
+Kompresja
+Cel:
+• Archiwizacja
+• Przesyłanie
+
+Rodzaje:
+• bezstratna (lossless compression)
+• stratna (lossy compression)
+
+– bez kompresji
+– po kompresji
+
+• Obliczyć stopień kompresji (SK)
+
+* Image source: https://tylerbrownblog.files.wordpress.com/2016/06/example-of-lossy-compression.png
+
+Stopień kompresji
+SK =
+
+SK w praktyce
+
+KP
+KW
+
+Przyjmujemy:
+• KW = File Size
+• KP = Size in memory
+
+SK - stopień kompresji krzywej.
+KP [bajt] - obszar pamięci zajmowany przez kod pierwotny krzywej.
+KW [bajt] - obszar pamięci zajmowany przez kod wynikowy krzywej
+
+Q=50
+
+SK
+
+Metoda RLE
+• Kodowanie ciągów identycznych symboli
+– para zawiera symbol i liczbę jego powtórzeń
+
+• Przykład kodowania:
+– 7,7,8,9,10,10,10,10,9,9,9,8,7,7,7
+– 7(2), 8(1), 9(1), 10(4), 9(3), 8(1), 7(3).
+
+KP
+KW
+
+=
+
+Size in memory
+File Size
+
+=
+
+1200kB
+31,2kB
+
+=
+
+38
+
+Przeszukiwanie obrazu
+• Linia po linii
+– Pionowo
+– Poziomo
+
+• Krzywa Hilberta
+
+• Długość kodu zależy:
+– od rozmiaru obrazu (HxW),
+– od liczby poziomów jasności obrazu (M)
+
+5
+
+2025-04-16
+
+Zadanie
+Opracować algorytm i uruchomić aplikację
+realizującą wyznaczanie następujących
+składowych wektora cech obiektu binarnego:
+• Momenty
+• Pole powierzchni i obwód
+• Współczynniki kształtu: aspectRatio, extent,
+solidity, equivalentDiameter
+
+Analiza obiektów
+obliczanie wektora cech
+
+Klasyczny schemat
+Typowy image processing
+
+Preprocessing
+• Obróbka wstępna obrazu
+• Przykładowe metody:
+
+Input image
+
+Preprocessing
+
+Postprocessing
+
+Segmentation
+
+Classification
+
+– Odszumianie obrazu (np. Process>Noise>Despeckle)
+– Manipulacja jasnością/kontrastem
+– Filtracja dolno/górno -przepustowa
+
+Result
+
+Segmentation
+• Wyodrębnienie obiektów z obrazu
+• Klasyczne podejście (przykładowe metody):
+– Progowanie (/adaptacyjne)
+– Klasteryzacja
+– Wykrywanie krawędzi
+– Rozrost regionu
+
+Postprocessing
+• Obróbka już wyodrębnionych obiektów
+• Przykładowe metody:
+– Dzielenie obiektów metodą wododziałową
+(watershed) lub metodą grafów (graph cut)
+– Zawężanie obrysu obiektów np. metodą
+aktywnego konturu (active contour)
+
+• Metody oparte o AI
+– Konwolucyjne sieci neuronowe
+*[Image source: https://docs.opencv.org/master/d7/d4d/tutorial_py_thresholding.html]
+
+*[Image source: https://media.arxiv-vanity.com/render-output/4644354/figures/ws1.png]
+
+6
+
+2025-04-16
+
+Classification
+• Klasyfikacja – przypisanie obiektów do
+odpowiednich klas
+• Na podstawie wektora cech
+• Różne metody klasyfikacji:
+– Drzewa decyzyjne
+– Najbliższego sąsiada
+– Maszyna wektorów nośnych (SVM)
+– Płytka sieć neuronowa
+
+Object shape features
+Parametry kształtu
+
+Momenty geometryczne
+
+Cechy (features)
+Obrazu
+• Intensity (Max/Min/Mean)
+• Detected shapes
+• Detected patterns
+
+Obiektu
+• Intensity (Max/Min/Mean)
+• Area
+• Roundness / Circularity
+• Solidity
+• Eccentricity
+• Perimeter
+• Orientation
+• Euler Number
+
+Podsumowanie Lab 4
+• Segmentacja (adaptacyjna & Otsu)
+• Segmentacja GrabCut
+• Algorytm Watershed
+• Metoda Inpainting
+• Kompresja RLE
+• Analiza obiektów - obliczanie wektora cech
+
+7
+
+

@@ -23,4 +23,8 @@ export global RustActions {
     callback skeletonize();
     callback selective-stretch(int, int);
     callback posterize(int);
+    callback segment(int);
+    callback median-filter(int);
+    callback dilate(int);
+    callback custom-filter(float, float, float, float, float, float, float, float, float);
 }

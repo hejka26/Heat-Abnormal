@@ -1,0 +1,1057 @@
+24/03/2026
+
+Regulamin
+
+ALGORYTMY PRZETWARZANIA
+OBRAZÓW
+
+Łukasz Roszkowiak
+
+• Tworzenie algorytmów i uruchamianie aplikacji
+zgodnie z treścią zadań zamieszczonych w
+instrukcji do każdego z ćwiczeń 0-41 pkt.
+• Test aplikacji na ostatnich zajęciach 0-6 pkt.
+• Dokumentacja i ocena stylistyki 0-3pkt
+• Sumarycznie do zdobycia: 50 pkt.
+• Minimalna liczba pkt. do zaliczenia: 26
+• Maksymalnie 1 nieobecność nieusprawiedliwiona
+
+Aplikacja
+
+Aplikacja
+Lab 1
+Łukasz Roszkowiak
+
+Zaprojektow
+anie aplikacji
+
+Wybór
+języka
+
+Funkcjonaln
+ości
+Własny
+kod /
+biblioteki
+
+1
+
+24/03/2026
+
+• Dowolny język
+• Wziąć pod uwagę:
+– popularność
+– współpraca z OpenCV
+
+Wybór
+języka
+
+Aplikacja
+
+Zaprojektow
+anie aplikacji
+
+Wybór
+języka
+
+Zaprojektowanie
+aplikacji
+
+Funkcjonaln
+ości
+Własny
+kod /
+biblioteki
+
+• Jedno / wiele okien
+• Menu
+– Stałe przyciski
+– Rozwijane listy
+– Podgrupy
+
+• Prawy przycisk myszy
+
+2
+
+24/03/2026
+
+• Niektóre zadania z Lab1 i Lab2 są do
+wykonania własną implementacją bez użycia
+bibliotek
+• Pozostałe zadania można wykonać przy
+pomocy bibliotek
+
+Aplikacja
+
+Zaprojektow
+anie aplikacji
+
+Wybór
+języka
+
+Funkcjonaln
+ości
+Własny
+kod /
+biblioteki
+
+OpenCV
+
+• Głównie bazujemy na OpenCV
+
+Własny
+kod /
+biblioteki
+
+Dokumentacja OpenCV
+
+* Obraz: https://media.geeksforgeeks.org/wp-content/uploads/20250703122704708294/Open-Cv.webp
+
+3
+
+24/03/2026
+
+Aplikacja
+
+Podstawowe funkcjonalności
+• Wczytanie obrazu
+– Monochromatycznego
+– Kolorowego
+
+Zaprojektow
+anie aplikacji
+
+Funkcjonaln
+ości
+
+• Skalowanie obrazów
+• Zapis obrazów wynikowych
+
+Aplikacja
+
+Zaprojektow
+anie aplikacji
+
+Wybór
+języka
+
+Wszystkie funkcjonalności (cz.1)
+
+Funkcjonaln
+ości
+Własny
+kod /
+biblioteki
+
+• Wyświetlanie wielu obrazów
+jednocześnie
+– Wczytanych
+– Obraz pierwotny i wynikowy
+
+Własny
+kod /
+biblioteki
+
+Wybór
+języka
+
+Funkcjonalności
+
+Lab 1
+
+Lab 1
+
+• Wczytanie i wyświetlenie
+obrazu/1
+• Histogramu obrazu – rep.
+graficzna/1
+• Histogram aktualizowany
+„online”/1
+• Histogramu obrazu- reprezentacja
+tablicowa/1
+
+Lab 2
+
+• RGB(HSV/Lab)>3xGray /1
+• Rozciąganie hist/2
+• Equalizacja hist/2
+• Rozciąganie selektywne/2
+
+Lab 2
+
+• Redukcja poz. szar.
+(posteryzacja)/2
+• Maska wygładzania i wyostrzania
+/1
+• Uniwersalna maska
+interaktywna/2
+• Zadbanie o wartości brzegowe/1
+
+• Operacja medianowa/1
+• Operacja dwuargumentowa/1
+• Filtracja 1- i 2-etapowa (maska
+5x5 z dwóch 3x3)/2
+
+4
+
+24/03/2026
+
+Wszystkie funkcjonalności (cz.2)
+Lab 3
+
+• Operacje morfologii matematycznej /1
+• Szkieletyzacja /3
+• Linia profilu /2
+• Hough /3
+• Image pyramid /1
+
+Lab 4
+
+• Segmentacja /1
+• GrabCut /2
+• Algorytm Watershed /3
+• Obliczanie wektora cech /1
+• Kompresja RLE /2
+• Image Inpainting /2
+
+Lab 5
+
+• Ogólne wrażenie – stylistyka
+programu/2
+• Sprawdzenie działania aplikacji /6
+• Oddanie zadań lab./1
+
+APO – LAB 1
+
+Obraz monochromatyczny
+
+HISTOGRAM
+
+5
+
+24/03/2026
+
+Histogram
+
+Obraz szaroodcieniowy
+
+• To jeden z graficznych sposobów
+przedstawiania rozkładu empirycznego cechy.
+Składa się z szeregu prostokątów
+umieszczonych na osi współrzędnych.
+• W przypadku obrazów w skali szarości, gdzie
+kolory pikseli są opisane za pomocą jednej
+liczby (w zakresie [0,255]), histogram pokazuje
+ile występuje elementów (pikseli) każdego z
+kolorów.
+
+• Dla obrazów szaroodcieniowych wartość f to
+luminancja – jasność
+
+Zliczenia wartości w obrazie
+
+Zliczenia wartości w obrazie
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+2
+2
+1
+1
+1
+1
+1
+1
+0
+
+0
+2
+2
+2
+2
+7
+7
+2
+2
+0
+
+0
+2
+2
+2
+7
+6
+7
+1
+1
+0
+
+0
+1
+1
+7
+6
+5
+6
+1
+1
+0
+
+0
+2
+1
+6
+5
+5
+6
+2
+1
+0
+
+0
+2
+2
+6
+6
+6
+6
+2
+2
+0
+
+0
+2
+2
+2
+2
+1
+2
+1
+2
+0
+
+0
+1
+4
+1
+2
+2
+2
+5
+3
+0
+
+0
+0 * maks wartość w tym
+0
+obrazie to 7
+0
+0
+0
+0
+0
+0
+0
+
+• Zliczenia wystąpień wartości w obrazie
+Wartość w obrazie
+
+Wystąpienia
+
+0
+
+36
+
+1
+
+18
+
+2
+
+26
+
+3
+
+1
+
+4
+
+1
+
+5
+
+4
+
+6
+
+9
+
+7
+
+5
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+2
+2
+1
+1
+1
+1
+1
+1
+0
+
+0
+2
+2
+2
+2
+7
+7
+2
+2
+0
+
+0
+2
+2
+2
+7
+6
+7
+1
+1
+0
+
+0
+1
+1
+7
+6
+5
+6
+1
+1
+0
+
+0
+2
+1
+6
+5
+5
+6
+2
+1
+0
+
+• Sprawdzenie: 36+18+26+1+1+4+9+5=100
+10px * 10px = 100
+
+0
+2
+2
+6
+6
+6
+6
+2
+2
+0
+
+0
+2
+2
+2
+2
+1
+2
+1
+2
+0
+
+0
+1
+4
+1
+2
+2
+2
+5
+3
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+Wartość w obrazie
+
+Wystąpienia
+
+0
+
+36
+
+1
+
+18
+
+2
+
+26
+
+3
+
+1
+
+40
+
+4
+
+1
+
+35
+
+5
+
+4
+
+30
+
+6
+
+9
+
+25
+
+7
+
+5
+
+20
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+2
+2
+1
+1
+1
+1
+1
+1
+0
+
+0
+2
+2
+2
+2
+7
+7
+2
+2
+0
+
+0
+2
+2
+2
+7
+6
+7
+1
+1
+0
+
+0
+1
+1
+7
+6
+5
+6
+1
+1
+0
+
+0
+2
+1
+6
+5
+5
+6
+2
+1
+0
+
+0
+2
+2
+6
+6
+6
+6
+2
+2
+0
+
+0
+2
+2
+2
+2
+1
+2
+1
+2
+0
+
+0
+1
+4
+1
+2
+2
+2
+5
+3
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+15
+10
+5
+0
+0 1 2 3 4 5 6 7
+
+6
+
+24/03/2026
+
+Tworzenie histogramu
+
+Utworzony histogram
+
+Skalowanie histogramu
+• Proszę podać również wartości
+znormaliowane do jedności
+• oraz średnią i
+odch. standardowe
+
+RGB VS GRAY
+Jasność
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+Zliczenia
+
+0
+
+0
+
+5
+
+6
+
+4
+
+5
+
+znormalizowane
+
+0
+
+0
+
+0,83
+
+1
+
+0,66
+
+0,83
+
+7
+
+24/03/2026
+
+Wartości kolorów
+
+Obraz kolorowy
+• Możliwość wczytania
+obrazów kolorowych
+
+RGB2Gray
+
+RGB -> 3xGray
+• Operacje wykonujemy na
+obrazach grayscale, więc:
+– RGB2Gray
+– rozłożenie na 3 obrazy
+szaroodcieniowe
+
+8
+
+24/03/2026
+
+Przeniesienie do alternatywnej
+przestrzeni barw
+• Nie zależy nam na wyświetlaniu innym niż RGB
+• Od razu rozkładamy na 3 szaroodcieniowe
+• HSV
+
+ROZCIĄGANIE I WYRÓWNYWANIE
+HISTOGRAMU
+
+• Lab
+
+Wyrównanie histogramu
+
+Wyrównanie histogramu (przykład)
+
+• Wyrównanie histogramu dąży do ujednolicenia
+rozkładu pikseli we wszystkich dostępnych
+poziomach jasności.
+• Cel: poprawa jakości obrazu
+• Normalizacja histogramu: liniowe rozciągnięcie
+histogramu
+• Equlizacja histogramu: w oparciu o histogram
+kumulatywny, dąży do wyrównania
+występowania wszystkich jasności w
+obrazie; uwydatnia szczegóły w obrazie
+
+oryginał
+
+normalizacja
+
+equalizacja
+
+9
+
+24/03/2026
+
+Zadanie
+
+Obraz o zawężonym histogramie
+
+Opracować algorytm i uruchomić aplikację
+rozciągania i wyrównywania histogramu
+metodami przedstawionymi na wykładzie:
+a) Rozciąganie histogramu
+b) Wyrównanie histogramu przez equalizację
+
+Szaroodcieniowy obraz bez
+modyfikacji
+
+Obraz o zawężonym histogramie
+który należy poddać obróbce
+
+• UWAGA! Algorytm należy opracować własnym
+kodem – bez użycia bibliotek (typu OpenCV)
+
+Rozciąganie histogramu
+Obraz o zawężonym histogramie
+
+Lmin
+
+ ( p(i, j ) − min )* Lmax
+q (i , j ) = 
+max − min
+
+Lmax
+
+
+Rozciąganie (Normalize)
+
+dla
+
+Equalizacja
+Obraz o zawężonym histogramie
+
+Obraz po wyrównaniu
+histogramu przez equalizację
+
+p(i, j )  min
+
+dla min  p(i, j )  max
+dla
+
+p(i, j )  max
+
+10
+
+24/03/2026
+
+Equalizacja
+Obraz o
+zawężonym
+histogramie
+
+Obraz po
+wyrównaniu
+histogramu przez
+rozciąganie
+
+Obraz po
+wyrównaniu
+histogramu przez
+equalizację
+
+OPERACJE PUNKTOWE
+JEDNOARGUMENTOWE
+
+Zadanie
+
+Zapis op. jednopunktowych
+
+Opracować algorytm i uruchomić aplikację
+realizującą następujące operacje punktowe
+jednoargumentowe:
+• negacja,
+• rozciąganie z zakresu p1-p2 do zakresu q3-q4,
+w szczególności gdy q3=0, q4=Lmax.
+
+• Opis matematyczny
+
+• UWAGA! Algorytm należy opracować własnym
+kodem – bez użycia bibliotek (typu OpenCV)
+
+• Tablica LUT
+
+• Interpretacja graficzna
+
+p(i,j) 0 1 2 3 4 5 6 7 8 9 10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+…
+
+q(i,j) 0 0 0 0 0 1 1 1 1 1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+…
+
+1
+
+11
+
+24/03/2026
+
+LUT
+
+Negacja
+
+• Look Up Table – tablica(tabela) przekodowań
+
+• q(i,j) = 255 – p(i,j)
+p(i,j)
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+...
+
+q(i,j)
+
+255
+
+254
+
+253
+
+252
+
+251
+
+250
+
+249
+
+248
+
+247
+
+...
+
+progowanie (pt=5)
+
+p(i,j) 0 1 2 3 4 5 6 7 8 9 10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+q(i,j) 0 0 0 0 0 1 1 1 1 1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+Rozciąganie selektywne (1)
+
+Rozciąganie selektywne (2)
+
+• rozciąganie z zakresu p1-p2 do zakresu q3-q4,
+w szczególności gdy q3=0, q4=Lmax
+
+• rozciąganie z zakresu p1-p2 do zakresu q3-q4
+
+• p1=124
+• p2=165
+• q3=0
+• q4=255
+
+• p1=30
+• p2=128
+• q3=150
+• q4=190
+
+12
+
+24/03/2026
+
+"o autorze"
+• Uwaga: Każda z aplikacji powinna zawierać w
+pasku menu opcję „informacja o programie”
+• Przykład dla aplikacji zbiorczej z ćwiczeń:
+Aplikacja zbiorcza z ćwiczeń laboratoryjnych
+Autor: Jan Kowalski
+Prowadzący: dr inż. Łukasz Roszkowiak
+Algorytmy Przetwarzania Obrazów 2024
+WIT grupa ID: ……
+
+Podsumowanie
+Funkcjonalności do implementacji
+• Wczytanie obrazu szaroodcieniowego (BMP)
+• Wczytanie obrazu kolorowego
+• Obliczenia histogramu – kod własny
+• Histogram obrazu
+– reprezentacja graficzna
+– reprezentacja tablicowa (+ znormalizowana)
+– średnia i odchylenie standardowe
+– aktualizacja wartości „na bieżąco”
+
+• RGB2Gray
+• RGB2HSV oraz RGB2Lab
+• Rozciąganie histogramu
+• Equalizacja histogramu
+• Rozciągane selektywne
+
+13
+
+

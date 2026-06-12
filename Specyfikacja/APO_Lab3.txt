@@ -1,0 +1,693 @@
+2025-04-09
+
+ALGORYTMY PRZETWARZANIA
+OBRAZÓW
+
+Operacje morfologii
+matematycznej
+
+Lab 3
+Łukasz Roszkowiak
+
+Zadanie
+
+Op. morf. w obrazach binarnych
+
+• Opracować algorytm i zaimplementować w
+aplikacji operację morfologiczną na obrazie
+przy użyciu wybranego elementu
+strukturalnego.
+
+• Przekształcenia polegają na zmianie
+intensywności lub pozostawieniu
+intensywności punktu przykrytego przez punkt
+centralny elementu strukturalnego
+
+Operacje
+• erozji,
+• dylatacji,
+• otwarcia,
+• zamknięcia
+
+Podstawowe elementy stukturalne
+
+Elementy strukturalne
+• romb (cztero-spójnego
+sąsiedztwa),
+• kwadrat (ośmio-spójnego
+sąsiedztwa)
+
+Operacje morfologiczne w OpenCV
+
+Typy op. morf. w OpenCV
+
+1
+
+2025-04-09
+
+Elementy strukturalne w OpenCV
+
+Skrajne piksele
+Różne wersje uzupełniania pikseli granicy obrazu:
+• Stała wartość (constant)
+• Powielenie (replicate)
+• Odbicie (reflect)
+• Odbicie v2 (reflect_101)
+• Zawinięcie (wrap)
+
+iiiiiiii|abcdef|iiiiiiii
+aaaa|abcdef|eeee
+dcba|abcdef|fedc
+edcb|abcdef|edcb
+cdef|abcdef|abcd
+
+Zadanie
+Opracować algorytm i zaimplementować w
+aplikacji realizację algorytmu ścieniania
+
+Operacja szkieletyzacji
+Przekształcenie obiektu w jego szkielet czyli
+zbiór punktów równoodległych od co najmniej
+dwóch krawędzi obiektu.
+
+Szkielety podstawowych kształtów
+
+Szkieletyzacja (przykład)
+• znalezienie szkieletu czyli punktów obiektu
+równoodległych od jego brzegów
+
+2
+
+2025-04-09
+
+Zadanie
+
+Detekcja prostych
+
+Opracować algorytm i uruchomić aplikację
+realizującą detekcję prostych w obrazie z
+wykorzystaniem transformaty Hough’a.
+Aplikację proszę przetestować na obrazach,
+zawierających czytelne linie proste np. zdjęcie
+krzyżówki lub sudoku.
+
+Transformacja Hough’a
+
+Transformacja Hough’a
+
+• Metoda detekcji krzywych (nie pikseli (!))
+odporna na szum i nieciągłości
+• Transformacja pomiędzy punktami obrazu a
+przestrzenią parametrów poszukiwanej
+krzywej
+• Przestrzeń parametrów:
+Równanie sinusoidy x  cosj + y  sinj =r
+
+Obraz
+• Punkt
+
+Przestrzeń parametrów
+• Sinusoida
+
+• Prosta
+
+• Punkt
+
+• Punkty leżące na tej samej
+prostej
+
+• Krzywe przechodzące przez
+wspólny punkt
+
+Hough w OpenCV
+W pełni
+automatycznie
+tj. przy arbitralne
+dobranych
+wartościach
+parametrów
+
+Linia profilu
+
+3
+
+2025-04-09
+
+Zadanie
+
+Linia profilu
+
+Opracować algorytm i uruchomić aplikację
+realizującą wizualizację wartości obrazu wzdłuż
+zadanej linii prostej ograniczonej dwoma
+punktami – tzw. linia profilu.
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+2
+2
+1
+1
+1
+1
+1
+1
+0
+
+0
+2
+2
+2
+2
+7
+7
+2
+2
+0
+
+Linia profilu
+0 0
+0 2
+0
+0
+0 0 22
+0 0 12
+0 0 11
+0
+1
+0 0 11
+0 0 11
+0
+0 11
+0 0 11
+0
+0
+0 0
+
+0
+2
+0
+22
+22
+22
+2
+77
+77
+22
+22
+0
+0
+
+0
+2
+0
+2
+2
+2
+2
+2
+7
+7
+6
+6
+7
+7
+1
+1
+1
+1
+0
+0
+
+0
+1
+
+0
+11
+17
+76
+6
+5
+5
+66
+11
+1
+1
+0
+
+0
+
+0
+2
+
+0
+2
+
+0
+
+0
+
+0
+0
+0
+2 1 2 22
+1 6 2 62
+6 5 6 62
+5
+6
+2
+5 6 61
+5
+6 6 6 62
+2 2 2 21
+1
+1 2 22
+0
+0
+0
+
+0
+2
+0
+21
+24
+21
+2
+12
+22
+15
+23
+0
+0
+
+0
+1
+0
+4
+0
+1
+0
+0
+2
+0
+2
+0
+2
+0
+0
+5
+0
+3
+0
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+Linia profilu
+00
+00
+00
+00
+00
+00
+00
+00
+00
+00
+
+00
+22
+22
+1
+1
+1
+1
+1
+1
+0
+
+0
+0
+2
+2
+2
+2
+2
+2
+7
+7
+2
+2
+0
+
+0
+0
+2
+2
+2
+2
+2
+7
+6
+7
+1
+1
+0
+
+0
+0
+1
+1
+1
+1
+7
+6
+5
+6
+1
+1
+0
+
+00
+22
+11
+6
+5
+5
+6
+2
+1
+0
+
+00
+22
+22
+66
+66
+66
+66
+22
+22
+00
+
+00
+22
+22
+22
+22
+11
+22
+11
+22
+00
+
+00
+11
+44
+11
+22
+22
+22
+55
+33
+00
+
+0
+2
+2
+2
+7
+6
+7
+1
+1
+0
+
+0
+1
+1
+7
+6
+5
+6
+1
+1
+0
+
+0
+2
+1
+6
+5
+5
+6
+2
+1
+0
+
+0
+2
+2
+6
+6
+6
+6
+2
+2
+0
+
+0
+2
+2
+2
+2
+1
+2
+1
+2
+0
+
+0
+1
+4
+1
+2
+2
+2
+5
+3
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+Linia profilu
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+0
+2
+2
+1
+1
+1
+1
+1
+1
+0
+
+0
+2
+2
+2
+2
+7
+7
+2
+2
+0
+
+0
+2
+2
+2
+7
+6
+7
+1
+1
+0
+
+0
+1
+1
+7
+6
+5
+6
+1
+1
+0
+
+0
+2
+1
+6
+5
+5
+6
+2
+1
+0
+
+0
+2
+2
+6
+6
+6
+6
+2
+2
+0
+
+0
+2
+2
+2
+2
+1
+2
+1
+2
+0
+
+0
+1
+4
+1
+2
+2
+2
+5
+3
+0
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+Linia profilu (2)
+
+00
+00
+00
+00
+00
+00
+00
+00
+00
+00
+
+4
+
+2025-04-09
+
+Jak znaleźć wartości linii profilu?
+• Bresenham’s Line Generation
+Algorithm
+
+Piramida obrazów
+
+• Przykład:
+https://www.geeksforgeeks.org/bresenhamsline-generation-algorithm/
+
+Zadanie
+
+Piramida obrazów
+
+Opracować algorytm i uruchomić aplikację
+realizującą piramidę obrazów ograniczoną do 2
+rozmiarów w górę i w dół
+
+• to zbiór obrazów powstałych z jednego
+oryginalnego obrazu
+• sukcesywnie próbkowane w dół (lub w górę),
+aż do osiągnięcia pożądanego punktu
+zatrzymania
+
+*źródło obrazów: wikipedia.org
+
+Rodzaje piramid
+Istnieją dwa popularne rodzaje piramid obrazu:
+• Piramida gaussowska:
+– Używana do próbkowania w dół obrazów
+– dst = cv.pyrDown(src, dstsize=(cols // 2, rows // 2))
+
+Zalety piramid
+• Proste i szybkie rozwiązanie
+• Często wykorzystywane jako opcja „zoom”
+
+• Piramida Laplaciana:
+– Służy do rekonstrukcji obrazu o wyższej rozdzielczości z
+obrazu znajdującego się niżej w piramidzie (o niższej
+rozdzielczości)
+– dst = cv.pyrUp(src, dstsize=(2 * cols, 2 * rows))
+
+5
+
+2025-04-09
+
+Podsumowanie Lab3
+• Operacje morfologii matematycznej
+• Szkieletyzacja
+• Detekcja prostych
+• Linia profilu
+• Piramida obrazów
+
+6
+
+

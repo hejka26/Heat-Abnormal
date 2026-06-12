@@ -1,0 +1,668 @@
+2025-04-09
+
+ALGORYTMY PRZETWARZANIA
+OBRAZÓW
+
+Redukcja poziomów szarości
+(posteryzacja)
+Lab 2
+
+Lab 2
+Łukasz Roszkowiak
+
+Zadanie
+
+Zapis op. jednopunktowych
+
+Opracować algorytm i uruchomić aplikację
+realizującą typowe operacje punktowe
+jednoargumentowe takie jak:
+• negacja,
+• redukcja poziomów szarości przez posteryzację,
+• rozciąganie z zakresu p1-p2 do zakresu q3-q4, w
+szczególności gdy q3=0, q4=Lmax.
+
+• Opis matematyczny
+• Interpretacja graficzna
+
+• Tablica LUT
+• UWAGA! Algorytm należy opracować własnym
+kodem – bez użycia bibliotek (typu OpenCV)
+
+p(i,j) 0 1 2 3 4 5 6 7 8 9 10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+…
+
+q(i,j) 0 0 0 0 0 1 1 1 1 1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+…
+
+LUT
+
+1
+
+Negacja
+
+• Look Up Table – tablica(tabela) przekodowań
+
+• q(i,j) = 255 – p(i,j)
+p(i,j)
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+...
+
+q(i,j)
+
+255
+
+254
+
+253
+
+252
+
+251
+
+250
+
+249
+
+248
+
+247
+
+...
+
+progowanie (pt=5)
+
+p(i,j) 0 1 2 3 4 5 6 7 8 9 10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+q(i,j) 0 0 0 0 0 1 1 1 1 1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+2025-04-09
+
+Posteryzacja
+• Redukcja kolorów (odcieni szarości)
+• Ograniczenie rozdzielczość poziomów jasności
+(dokładności kwantowania)
+
+Operacje sąsiedztwa
+Lab 2
+
+← Oryginał
+
+Zadanie
+
+Konwolucja
+
+Opracować algorytm i zaimplementować w aplikacji
+metody przedstawione na wykładzie:
+a) wygładzania liniowego oparte na typowych maskach
+wygładzania
+b) detekcji krawędzi oparte na 3 maskach detekcji
+krawędzi: Sobel, Laplacian, Canny
+c) wyostrzania liniowego oparte na 3 maskach
+laplasjanowych
+d) kierunkowej detekcji krawędzi w oparciu o maskę
+Prewitta
+e) uniwersalną operację liniową sąsiedztwa
+
+Obraz
+1
+
+1
+
+1
+
+0
+
+0
+
+1
+
+0
+
+1
+
+0
+
+1
+
+1
+
+1
+
+0
+
+0
+
+1
+
+0
+
+0
+
+0
+
+1
+
+1
+
+1
+
+1
+
+0
+
+1
+
+0
+
+0
+
+1
+
+1
+
+0
+
+0
+
+1
+
+1
+
+0
+
+0
+
+Filtracja górnoprzepustowa(FG)
+• Obliczana średnia ważona
+Obraz pierwotny (p)
+
+kernel
+
+-1
+
+-1
+
+-1
+
+8
+
+-1
+
+-1
+
+-1
+
+-1
+
+Maski (kernels)
+Wyostrzanie krawędzi
+
+Obraz wynikowy (q)
+
+-1
+
+Kernel
+
+32
+
+K - współczynnik maski
+K=1
+q(2,2) = (-15 + (-15) + (-0) + (-13) + (8*13) + (-15) + (-0) + (-0) + (-14) ) = 32
+q(2,2)
+
+-1
+
+-1
+
+-1
+
+-1
+
+9
+
+-1
+
+-1
+
+-1
+
+-1
+
+1
+
+-2
+
+1
+
+-2
+
+5
+
+-2
+
+1
+
+-2
+
+1
+
+• Suma współczynników
+maski równa 1
+
+Detekcja krawędzi
+-1
+
+-1
+
+-1
+
+-1
+
+8
+
+-1
+
+-1
+
+-1
+
+-1
+
+1
+
+-2
+
+1
+
+-2
+
+4
+
+-2
+
+1
+
+-2
+
+1
+
+• Suma współczynników
+maski równa 0 -> K=1
+
+2
+
+2025-04-09
+
+Brak pikseli przy krawędzi
+
+Image padding
+
+• Obliczana średnia ważona
+Obraz pierwotny (p)
+
+kernel
+
+Obraz wynikowy (q)
+
+-1
+
+-1
+
+-1
+
+-1
+
+8
+
+-1
+
+-1
+
+-1
+
+-1
+
+?
+
+* Obraz: http://datahacker.rs/what-is-padding-cnn/
+
+Skrajne piksele
+
+Piksele brzegowe
+
+Różne wersje uzupełniania pikseli granicy obrazu:
+
+Zaimplementować wybór następujących opcji na
+brzegowych pikselach obrazu:
+• pozostawienie wartości pikseli brzegowych bez
+zmian (isolated),
+• powielenie wartości pikseli brzegowych przez
+odbicie lustrzane (reflect),
+• powielenie wartości pikseli brzegowych przez
+powielenie skrajnego piksela (replicate)
+
+• Stała wartość (constant)
+• Powielenie (replicate)
+• Odbicie (reflect)
+• Odbicie v2 (reflect_101)
+• Zawinięcie (wrap)
+
+iiiiiiii|abcdef|iiiiiiii
+aaaa|abcdef|eeee
+dcba|abcdef|fedc
+edcb|abcdef|edcb
+cdef|abcdef|abcd
+
+Zadanie
+
+Filtracja medianowa
+Lab 2
+
+Opracować algorytm i zaimplementować w
+aplikacji realizację filtracji medianowej opartą
+na otoczeniu którego rozmiar wybiera
+użytkownik.
+Konieczne do zaimplementowania rozmiary
+otoczenia dla tego filtru to: 3x3, 5x5, 7x7.
+Należy również zadbać o piksele brzegowe obrazu
+
+3
+
+2025-04-09
+
+Filtr medianowy
+• Wybierana wartość środkowa w ciągu
+wartości uporządkowanych wewnątrz
+analizowanego okna
+
+Operacje punktowe
+dwuargumentowe
+Lab 2
+
+Okno: 15 15 0 13 13 15 0 0 7
+Posortowane: 0 0 0 7 13 13 15 15 15
+
+Zadanie
+
+Jednopunktowe wieloargumentowe
+operacje logiczne
+
+Opracować algorytm i zaimplementować w
+aplikacji realizację typowych operacji
+punktowych dwuargumentowych takich jak :
+• dodawanie/odejmowanie,
+• mieszanie (blending),
+• operacje logiczne (bitwise):
+
+• Najczęściej dla obrazów binarnych (0 i 1)
+• Wykonywana dla wartości obrazu (pikseli) lub
+na wartościach bitowych (bitwise)
+• Operacje:
+
+– AND,
+– OR,
+– NOT,
+– XOR
+
+– NOT
+– AND
+– OR
+– XOR
+
+a
+
+b
+
+OR
+
+a
+
+b
+
+AND
+
+a
+
+b
+
+XOR
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+1
+
+1
+
+0
+
+1
+
+0
+
+0
+
+1
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+0
+
+1
+
+0
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+1
+
+0
+
+Zadanie
+
+Filtracja dwu i jedno etapowa
+Lab 2
+
+Opracować algorytm i zaimplementować
+liniową operację sąsiedztwa opartą na
+masce 5x5 utworzonej na podstawie dwóch
+masek 3x3 użytych w dwuetapowej filtracji
+(1-szy etap – wygładzanie,
+2-gi etap – wyostrzanie).
+
+4
+
+2025-04-09
+
+Filtracja dwu vs jedno etapowa
+Dwie maski 3x3
+
+Filtracja dwu- i jedno-etapowa
+• Dwa dowolne filtry 3x3 można przekształcić w
+równoważny filtr 5x5 za pomocą konwolucji
+
+Maska 5x5
+
+Input
+
+Input
+
+3x3
+5x5
+3x3
+
+Output
+
+Output
+
+• Dwa dowolne filtry 3x3 można przekształcić w równoważny
+filtr 5x5 za pomocą konwolucji (‘full convolution’)
+
+Obraz
+
+4x4
+
+5x5
+
+5x5
+
+5x5
+
+Filtr
+
+3x3
+
+5x5
+
+3x3
+
+3x3
+
+Output
+
+2x2
+
+6x6
+
+5x5
+
+7x7
+
+‘same’
+
+‘full’
+
+‘valid’
+
+* https://towardsdatascience.com/the-most-intuitive-and-easiest-guide-for-convolutional-neural-network-3607be47480
+
+Filtracja dwu- i jedno-etapowa
+
+Podsumowanie​
+Funkcjonalności do implementacji​
+• Redukcja poz. szar.(posteryzacja)
+• Maska wygładzania i wyostrzania (sztywne)
+• Uniwersalna maska interaktywna
+• Zadbanie o wartości brzegowe
+• Operacja medianowa
+• Operacja dwuargumentowa
+• Filtracja 1-etapowa i 2-etapowa (maska 5x5 z
+dwóch 3x3)
+
+5
+
+

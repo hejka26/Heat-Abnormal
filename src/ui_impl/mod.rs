@@ -87,4 +87,40 @@ pub fn setup_callbacks(ui: &MainWindow, images_model: &Rc<VecModel<ImageContaine
         // Slint przesyła int (i32), więc rzutujemy na u8
         move |levels| handle_action(|| actions::posterize(&ui_handle, &images_model, levels as u8))
     });
+
+    ui.global::<RustActions>().on_segment({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |threshold| handle_action(|| actions::segment(&ui_handle, &images_model, threshold as u8))
+    });
+
+    ui.global::<RustActions>().on_median_filter({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |kernel_size| {
+            handle_action(|| actions::median_filter(&ui_handle, &images_model, kernel_size))
+        }
+    });
+
+    ui.global::<RustActions>().on_dilate({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |iterations| {
+            handle_action(|| actions::dilate(&ui_handle, &images_model, iterations))
+        }
+    });
+
+    ui.global::<RustActions>().on_custom_filter({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |m0, m1, m2, m3, m4, m5, m6, m7, m8| {
+            handle_action(|| {
+                actions::custom_filter(
+                    &ui_handle,
+                    &images_model,
+                    [m0, m1, m2, m3, m4, m5, m6, m7, m8],
+                )
+            })
+        }
+    });
 }

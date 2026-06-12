@@ -45,7 +45,7 @@ export component Histogram inherits Rectangle {
                             spacing: root.bar-spacing;
 
                             for val in root.data: Rectangle {
-                                min-width: 5px;
+                                // Remove fixed min-width to allow fitting
                                 Rectangle {
                                     y: parent.height - self.height;
                                     height: parent.height * (val / root.max-value);
@@ -53,26 +53,26 @@ export component Histogram inherits Rectangle {
                                     border-radius: root.bar-radius;
                                 }
                             }
-                        }
-                    }
-                }
+                            }
+                            }
+                            }
 
-                Row {
-            // Empty spacer to push the X-axis over
-            Rectangle { }
+                            Row {
+                            // Empty spacer to push the X-axis over
+                            Rectangle { }
 
-                    // X-Axis Scale
-            HorizontalLayout {
-                        height: 35px;
-                        alignment: space-between;
+                            // X-Axis Scale
+                            HorizontalLayout {
+                            height: 35px;
+                            alignment: space-between;
 
-                        for multiplier in [0.0, 0.25, 0.5, 0.75, 1.0]: Text {
-                            text: round(root.data.length * multiplier);
+                            for multiplier in [0.0, 0.25, 0.5, 0.75, 1.0]: Text {
+                            text: round((root.data.length - 1) * multiplier);
                             color: root.text-color;
                             font-size: 12px;
                             horizontal-alignment: center;
-                        }
-                    }
+                            }
+                            }
                 }
             }
         }
