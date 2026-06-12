@@ -16,6 +16,11 @@ export enum RustAction {
     ConvertColor,
     EqualizeHistogram,
     Skeletonize,
+    Negate,
+    ConvertToHSV,
+    ConvertToLab,
+    SplitRGB,
+    ShowAbout
 }
 
 struct ButtonAction { right-menu: RightPanelState, rust-action: RustAction}
@@ -35,6 +40,10 @@ export component LeftPanel inherits SlidingPanel {
                     requirement: ImageStateReq.Any,
                     action: { rust-action: RustAction.SaveFile }
                 },
+                {
+                    label: "About",
+                    action: { rust-action: RustAction.ShowAbout }
+                }
                 // { label: "Duplicate", requirement: ImageStateReq.Any, action: { } }
             ],
             },
@@ -45,6 +54,26 @@ export component LeftPanel inherits SlidingPanel {
                         label: "Convert Colorspace",
                         requirement: ImageStateReq.Any,
                         action: { rust-action: RustAction.ConvertColor }
+                    },
+                    {
+                        label: "Negate",
+                        requirement: ImageStateReq.Any,
+                        action: { rust-action: RustAction.Negate }
+                    },
+                    {
+                        label: "Split RGB",
+                        requirement: ImageStateReq.Color,
+                        action: { rust-action: RustAction.SplitRGB }
+                    },
+                    {
+                        label: "Convert to HSV",
+                        requirement: ImageStateReq.Color,
+                        action: { rust-action: RustAction.ConvertToHSV }
+                    },
+                    {
+                        label: "Convert to Lab",
+                        requirement: ImageStateReq.Color,
+                        action: { rust-action: RustAction.ConvertToLab }
                     },
                     {
                         label: "Equalize Histogram",
@@ -180,6 +209,21 @@ export component LeftPanel inherits SlidingPanel {
                                 }
                                 if sub-item.action.rust-action == RustAction.Skeletonize {
                                     RustActions.skeletonize();
+                                }
+                                if sub-item.action.rust-action == RustAction.Negate {
+                                    RustActions.negate();
+                                }
+                                if sub-item.action.rust-action == RustAction.ConvertToHSV {
+                                    RustActions.convert-to-hsv();
+                                }
+                                if sub-item.action.rust-action == RustAction.ConvertToLab {
+                                    RustActions.convert-to-lab();
+                                }
+                                if sub-item.action.rust-action == RustAction.SplitRGB {
+                                    RustActions.split-rgb();
+                                }
+                                if sub-item.action.rust-action == RustAction.ShowAbout {
+                                    RustActions.show-about();
                                 }
                             }
                         }

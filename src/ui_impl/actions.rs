@@ -378,8 +378,10 @@ pub fn skeletonize(
 pub fn selective_stretch(
     ui_handle: &Weak<MainWindow>,
     images_model: &Rc<VecModel<ImageContainer>>,
-    min_out: u8,
-    max_out: u8,
+    p1: u8,
+    p2: u8,
+    q3: u8,
+    q4: u8,
 ) -> Result<(), String> {
     let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
 
@@ -387,7 +389,7 @@ pub fn selective_stretch(
         return Err("Stretch requires a grayscale image".to_string());
     }
 
-    if min_out >= max_out {
+    if p1 >= p2 || q3 >= q4 {
         return Err("Max must be greater than min".to_string());
     }
 
@@ -397,32 +399,19 @@ pub fn selective_stretch(
     let width = buffer.width();
     let height = buffer.height();
 
-    // Find actual min and max in the image
-    let mut actual_min = 255u8;
-    let mut actual_max = 0u8;
-    for pixel in buffer.as_slice() {
-        let v = pixel.r;
-        if v < actual_min { actual_min = v; }
-        if v > actual_max { actual_max = v; }
-    }
-
-    if actual_min >= actual_max {
-        return Ok(()); // Image is uniform, nothing to stretch
-    }
-
     let mut lut = [0u8; 256];
-    let a = actual_min as f32;
-    let b = actual_max as f32;
-    let c = min_out as f32;
-    let d = max_out as f32;
+    let a = p1 as f32;
+    let b = p2 as f32;
+    let c = q3 as f32;
+    let d = q4 as f32;
 
     for i in 0..=255 {
-        if i <= actual_min as usize {
-            lut[i] = min_out;
-        } else if i >= actual_max as usize {
-            lut[i] = max_out;
+        if i <= p1 as usize {
+            lut[i] = q3;
+        } else if i >= p2 as usize {
+            lut[i] = q4;
         } else {
-            // Map [actual_min, actual_max] -> [min_out, max_out]
+            // Map [p1, p2] -> [q3, q4]
             let v = ((i as f32 - a) / (b - a) * (d - c) + c).round();
             lut[i] = v.clamp(0.0, 255.0) as u8;
         }
@@ -445,6 +434,140 @@ pub fn selective_stretch(
     images_model.set_row_data(selected_idx, img);
 
     calculate_gray_histogram(ui_handle, images_model)
+}
+
+pub fn negate(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+
+    let Some(buffer) = img.img.to_rgb8() else {
+        return Err("Couldn't retrieve image buffer".to_string());
+    };
+    let width = buffer.width();
+    let height = buffer.height();
+
+    let mut new_buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(width, height);
+    let old_slice = buffer.as_slice();
+    let new_slice = new_buffer.make_mut_slice();
+
+    for (i, pixel) in old_slice.iter().enumerate() {
+        new_slice[i] = slint::Rgb8Pixel {
+            r: 255 - pixel.r,
+            g: 255 - pixel.g,
+            b: 255 - pixel.b,
+        };
+    }
+
+    img.img = slint::Image::from_rgb8(new_buffer);
+    images_model.set_row_data(selected_idx, img.clone());
+
+    if !img.color {
+        let _ = calculate_gray_histogram(ui_handle, images_model);
+    }
+    Ok(())
+}
+
+pub fn convert_to_hsv(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) -> Result<(), String> {
+    let (ui, _, img) = helper::get_current_image(ui_handle, images_model)?;
+    if !img.color {
+        return Err("HSV conversion requires a color image".to_string());
+    }
+    let bgr_mat = {
+        let rgb_mat = helper::slint_to_rgb(&img.img)?;
+        let mut bgr = Mat::default();
+        imgproc::cvt_color(&rgb_mat, &mut bgr, imgproc::COLOR_RGB2BGR, 0, opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT).map_err(|e| e.to_string())?;
+        bgr
+    };
+    let mut hsv_mat = Mat::default();
+    imgproc::cvt_color(&bgr_mat, &mut hsv_mat, imgproc::COLOR_BGR2HSV, 0, opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT).map_err(|e| e.to_string())?;
+    
+    let mut channels = opencv::core::Vector::<Mat>::new();
+    opencv::core::split(&hsv_mat, &mut channels).map_err(|e| e.to_string())?;
+
+    for (i, name) in ["H", "S", "V"].iter().enumerate() {
+        let channel_mat = channels.get(i).map_err(|e| e.to_string())?;
+        let slint_img = helper::gray_to_slint(&channel_mat)?;
+        images_model.push(ImageContainer {
+            img: slint_img,
+            label: format!("{}_{}", img.label, name).into(),
+            color: false,
+        });
+    }
+    ui.global::<ImageStore>().set_selected_image((images_model.row_count() - 1) as i32);
+    Ok(())
+}
+
+pub fn convert_to_lab(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) -> Result<(), String> {
+    let (ui, _, img) = helper::get_current_image(ui_handle, images_model)?;
+    if !img.color {
+        return Err("Lab conversion requires a color image".to_string());
+    }
+    let bgr_mat = {
+        let rgb_mat = helper::slint_to_rgb(&img.img)?;
+        let mut bgr = Mat::default();
+        imgproc::cvt_color(&rgb_mat, &mut bgr, imgproc::COLOR_RGB2BGR, 0, opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT).map_err(|e| e.to_string())?;
+        bgr
+    };
+    let mut lab_mat = Mat::default();
+    imgproc::cvt_color(&bgr_mat, &mut lab_mat, imgproc::COLOR_BGR2Lab, 0, opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT).map_err(|e| e.to_string())?;
+    
+    let mut channels = opencv::core::Vector::<Mat>::new();
+    opencv::core::split(&lab_mat, &mut channels).map_err(|e| e.to_string())?;
+
+    for (i, name) in ["L", "a", "b"].iter().enumerate() {
+        let channel_mat = channels.get(i).map_err(|e| e.to_string())?;
+        let slint_img = helper::gray_to_slint(&channel_mat)?;
+        images_model.push(ImageContainer {
+            img: slint_img,
+            label: format!("{}_{}", img.label, name).into(),
+            color: false,
+        });
+    }
+    ui.global::<ImageStore>().set_selected_image((images_model.row_count() - 1) as i32);
+    Ok(())
+}
+
+pub fn split_rgb(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) -> Result<(), String> {
+    let (ui, _, img) = helper::get_current_image(ui_handle, images_model)?;
+    if !img.color {
+        return Err("RGB split requires a color image".to_string());
+    }
+    let rgb_mat = helper::slint_to_rgb(&img.img)?;
+    
+    let mut channels = opencv::core::Vector::<Mat>::new();
+    opencv::core::split(&rgb_mat, &mut channels).map_err(|e| e.to_string())?;
+
+    for (i, name) in ["R", "G", "B"].iter().enumerate() {
+        let channel_mat = channels.get(i).map_err(|e| e.to_string())?;
+        let slint_img = helper::gray_to_slint(&channel_mat)?;
+        images_model.push(ImageContainer {
+            img: slint_img,
+            label: format!("{}_{}", img.label, name).into(),
+            color: false,
+        });
+    }
+    ui.global::<ImageStore>().set_selected_image((images_model.row_count() - 1) as i32);
+    Ok(())
+}
+
+pub fn show_about() {
+    let msg = "Heat Abnormal\nAutor: Jakub Jankowski\nAlgorytmy Przetwarzania Obrazów 2026";
+    rfd::MessageDialog::new()
+        .set_title("O programie")
+        .set_description(msg)
+        .set_buttons(rfd::MessageButtons::Ok)
+        .show();
 }
 
 pub fn posterize(

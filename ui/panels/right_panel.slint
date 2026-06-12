@@ -65,18 +65,18 @@ export component RightPanel inherits SlidingPanel {
                 title = "Stretch histogram";
                 RustActions.calculate-gray-histogram()
             }
-            // Suwak dla wartości MIN
+            // Suwak dla wartości P1
             HorizontalLayout {
                 spacing: 10px;
                 Text {
-                    text: "Min: " + round(min-slider.value);
+                    text: "p1: " + round(p1-slider.value);
                     width: 60px;
                     vertical-alignment: center;
                 }
 
-                min-slider := Slider {
+                p1-slider := Slider {
                     minimum: 0;
-                    maximum: max-slider.value - 1;
+                    maximum: p2-slider.value - 1;
                     value: 0;
                 }
             }
@@ -84,13 +84,43 @@ export component RightPanel inherits SlidingPanel {
             HorizontalLayout {
                 spacing: 10px;
                 Text {
-                    text: "Max: " + round(max-slider.value);
+                    text: "p2: " + round(p2-slider.value);
                     width: 60px;
                     vertical-alignment: center;
                 }
 
-                max-slider := Slider {
-                    minimum: min-slider.value + 1;
+                p2-slider := Slider {
+                    minimum: p1-slider.value + 1;
+                    maximum: 255;
+                    value: 255;
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text {
+                    text: "q3: " + round(q3-slider.value);
+                    width: 60px;
+                    vertical-alignment: center;
+                }
+
+                q3-slider := Slider {
+                    minimum: 0;
+                    maximum: q4-slider.value - 1;
+                    value: 0;
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+                Text {
+                    text: "q4: " + round(q4-slider.value);
+                    width: 60px;
+                    vertical-alignment: center;
+                }
+
+                q4-slider := Slider {
+                    minimum: q3-slider.value + 1;
                     maximum: 255;
                     value: 255;
                 }
@@ -99,7 +129,12 @@ export component RightPanel inherits SlidingPanel {
             Button {
                 text: "Apply";
                 clicked => {
-                    RustActions.selective-stretch(round(min-slider.value), round(max-slider.value));
+                    RustActions.selective-stretch(
+                        round(p1-slider.value), 
+                        round(p2-slider.value),
+                        round(q3-slider.value),
+                        round(q4-slider.value)
+                    );
                 }
             }
         }

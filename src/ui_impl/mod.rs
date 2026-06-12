@@ -73,13 +73,45 @@ pub fn setup_callbacks(ui: &MainWindow, images_model: &Rc<VecModel<ImageContaine
     ui.global::<RustActions>().on_selective_stretch({
         let images_model = images_model.clone();
         let ui_handle = ui.as_weak();
-        // Assuming Slint passes these as i32, cast them to u8 for your action function
-        move |min_val, max_val| {
+        move |p1, p2, q3, q4| {
             handle_action(|| {
-                actions::selective_stretch(&ui_handle, &images_model, min_val as u8, max_val as u8)
+                actions::selective_stretch(
+                    &ui_handle,
+                    &images_model,
+                    p1 as u8,
+                    p2 as u8,
+                    q3 as u8,
+                    q4 as u8,
+                )
             })
         }
     });
+
+    ui.global::<RustActions>().on_negate({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || handle_action(|| actions::negate(&ui_handle, &images_model))
+    });
+
+    ui.global::<RustActions>().on_convert_to_hsv({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || handle_action(|| actions::convert_to_hsv(&ui_handle, &images_model))
+    });
+
+    ui.global::<RustActions>().on_convert_to_lab({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || handle_action(|| actions::convert_to_lab(&ui_handle, &images_model))
+    });
+
+    ui.global::<RustActions>().on_split_rgb({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || handle_action(|| actions::split_rgb(&ui_handle, &images_model))
+    });
+
+    ui.global::<RustActions>().on_show_about(|| actions::show_about());
 
     ui.global::<RustActions>().on_posterize({
         let images_model = images_model.clone();

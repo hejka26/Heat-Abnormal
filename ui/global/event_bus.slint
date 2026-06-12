@@ -21,7 +21,12 @@ export global RustActions {
     callback calculate-RGB-histogram();
     callback equalize-histogram();
     callback skeletonize();
-    callback selective-stretch(int, int);
+    callback selective-stretch(int, int, int, int);
+    callback negate();
+    callback convert-to-hsv();
+    callback convert-to-lab();
+    callback split-rgb();
+    callback show-about();
     callback posterize(int);
     callback segment(int);
     callback median-filter(int);
