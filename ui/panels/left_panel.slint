@@ -95,11 +95,6 @@ export component LeftPanel inherits SlidingPanel {
                         action: { right-menu: RightPanelState.Posterize }
                     },
                     {
-                        label: "Thresholding",
-                        requirement: ImageStateReq.Gray,
-                        action: { right-menu: RightPanelState.ThresholdSegmentation }
-                    },
-                    {
                         label: "Median Filter",
                         requirement: ImageStateReq.Any,
                         action: { right-menu: RightPanelState.MedianFilter }
@@ -145,6 +140,26 @@ export component LeftPanel inherits SlidingPanel {
                         action: { right-menu: RightPanelState.ImagePyramid }
                     },
                     {
+                        label: "Thresholding",
+                        requirement: ImageStateReq.Gray,
+                        action: { right-menu: RightPanelState.ThresholdSegmentation }
+                    },
+                    {
+                        label: "Adv Segmentation",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.AdvancedSegmentation }
+                    },
+                    {
+                        label: "Inpainting",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.Inpainting }
+                    },
+                    {
+                        label: "Compression",
+                        requirement: ImageStateReq.Any,
+                        action: { right-menu: RightPanelState.Compression }
+                    },
+                    {
                         label: "Custom Mask",
                         requirement: ImageStateReq.Any,
                         action: { right-menu: RightPanelState.CustomFilter }
@@ -154,6 +169,11 @@ export component LeftPanel inherits SlidingPanel {
             {
                 label: "Analyze",
                 submenu: [
+                    {
+                        label: "Object Analysis",
+                        requirement: ImageStateReq.Gray,
+                        action: { right-menu: RightPanelState.ObjectAnalysis }
+                    },
                     {
                         label: "Histogram",
                         requirement: ImageStateReq.Gray,

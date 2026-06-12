@@ -16,6 +16,10 @@ export global ProfileLineState {
     in property <float> max-value: 255;
 }
 
+export global TextOutputState {
+    in property <string> text: "";
+}
+
 export global RustActions {
     callback open-file();
     callback save-file();
@@ -32,7 +36,12 @@ export global RustActions {
     callback split-rgb();
     callback show-about();
     callback posterize(int);
-    callback segment(int);
+    callback segment(int, int);
+    callback grabcut(int);
+    callback watershed();
+    callback inpaint(int, int, int);
+    callback rle-compress();
+    callback analyze-objects();
     callback median-filter(int);
     callback dilate(int);
     callback custom-filter(float, float, float, float, float, float, float, float, float, int);

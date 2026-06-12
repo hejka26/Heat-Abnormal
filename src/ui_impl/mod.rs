@@ -123,7 +123,37 @@ pub fn setup_callbacks(ui: &MainWindow, images_model: &Rc<VecModel<ImageContaine
     ui.global::<RustActions>().on_segment({
         let images_model = images_model.clone();
         let ui_handle = ui.as_weak();
-        move |threshold| handle_action(|| actions::segment(&ui_handle, &images_model, threshold as u8))
+        move |method, threshold| handle_action(|| actions::segment(&ui_handle, &images_model, method, threshold as u8))
+    });
+
+    ui.global::<RustActions>().on_grabcut({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |iter| handle_action(|| actions::grabcut(&ui_handle, &images_model, iter))
+    });
+
+    ui.global::<RustActions>().on_watershed({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || handle_action(|| actions::watershed(&ui_handle, &images_model))
+    });
+
+    ui.global::<RustActions>().on_inpaint({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move |radius, method, mask_idx| handle_action(|| actions::inpaint(&ui_handle, &images_model, radius, method, mask_idx))
+    });
+
+    ui.global::<RustActions>().on_rle_compress({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || handle_action(|| actions::rle_compress(&ui_handle, &images_model))
+    });
+
+    ui.global::<RustActions>().on_analyze_objects({
+        let images_model = images_model.clone();
+        let ui_handle = ui.as_weak();
+        move || handle_action(|| actions::analyze_objects(&ui_handle, &images_model))
     });
 
     ui.global::<RustActions>().on_median_filter({

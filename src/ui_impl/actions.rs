@@ -7,7 +7,7 @@ use opencv::{
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::rc::Rc;
 
-use crate::{GrayHistogramState, ImageContainer, ImageStore, MainWindow, ProfileLineState};
+use crate::{GrayHistogramState, ImageContainer, ImageStore, MainWindow, ProfileLineState, TextOutputState};
 
 
 
@@ -145,6 +145,7 @@ pub fn image_pyramid(
     Ok(())
 }
 
+
 pub fn open_file(
     ui_handle: &Weak<MainWindow>,
     images_model: &Rc<VecModel<ImageContainer>>,
@@ -260,6 +261,7 @@ pub fn close_file(
 pub fn segment(
     ui_handle: &Weak<MainWindow>,
     images_model: &Rc<VecModel<ImageContainer>>,
+    method: i32,
     threshold: u8,
 ) -> Result<(), String> {
     let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
@@ -270,14 +272,19 @@ pub fn segment(
 
     let mat = helper::slint_to_gray(&img.img)?;
     let mut binary = Mat::default();
-    imgproc::threshold(
-        &mat,
-        &mut binary,
-        threshold as f64,
-        255.0,
-        imgproc::THRESH_BINARY,
-    )
-    .map_err(|e| format!("Thresholding failed: {}", e))?;
+
+    match method {
+        0 => { // Manual
+            imgproc::threshold(&mat, &mut binary, threshold as f64, 255.0, imgproc::THRESH_BINARY).map_err(|e| e.to_string())?;
+        },
+        1 => { // Otsu
+            imgproc::threshold(&mat, &mut binary, 0.0, 255.0, imgproc::THRESH_BINARY | imgproc::THRESH_OTSU).map_err(|e| e.to_string())?;
+        },
+        2 => { // Adaptive
+            imgproc::adaptive_threshold(&mat, &mut binary, 255.0, imgproc::ADAPTIVE_THRESH_GAUSSIAN_C, imgproc::THRESH_BINARY, 11, 2.0).map_err(|e| e.to_string())?;
+        },
+        _ => return Err("Unknown threshold method".to_string()),
+    }
 
     img.img = helper::gray_to_slint(&binary)?;
     images_model.set_row_data(selected_idx, img.clone());
@@ -991,5 +998,177 @@ pub fn two_stage_filter(
     img.img = if img.color { helper::rgb_to_slint(&filtered)? } else { helper::gray_to_slint(&filtered)? };
     images_model.set_row_data(selected_idx, img.clone());
     if !img.color { let _ = calculate_gray_histogram(ui_handle, images_model); }
+    Ok(())
+}
+
+pub fn grabcut(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    iter: i32,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+    if !img.color { return Err("GrabCut needs a color image".into()); }
+    
+    let mat = helper::slint_to_rgb(&img.img)?;
+    let mut mask = Mat::default();
+    let mut bgd_model = Mat::default();
+    let mut fgd_model = Mat::default();
+    
+    let rect = opencv::core::Rect::new(10, 10, mat.cols() - 20, mat.rows() - 20);
+    imgproc::grab_cut(&mat, &mut mask, rect, &mut bgd_model, &mut fgd_model, iter, imgproc::GC_INIT_WITH_RECT).map_err(|e| e.to_string())?;
+    
+    let mut binary_mask = Mat::default();
+    let mut bin1 = Mat::default();
+    let mut bin3 = Mat::default();
+    let scalar_gc_fgd = opencv::core::Scalar::all(imgproc::GC_FGD as f64);
+    let scalar_gc_pr_fgd = opencv::core::Scalar::all(imgproc::GC_PR_FGD as f64);
+    opencv::core::compare(&mask, &scalar_gc_fgd, &mut bin1, opencv::core::CMP_EQ).map_err(|e| e.to_string())?;
+    opencv::core::compare(&mask, &scalar_gc_pr_fgd, &mut bin3, opencv::core::CMP_EQ).map_err(|e| e.to_string())?;
+    opencv::core::bitwise_or(&bin1, &bin3, &mut binary_mask, &opencv::core::no_array()).map_err(|e| e.to_string())?;
+    
+    let mut result = Mat::default();
+    mat.copy_to_masked(&mut result, &binary_mask).map_err(|e| e.to_string())?;
+    
+    img.img = helper::rgb_to_slint(&result)?;
+    images_model.set_row_data(selected_idx, img);
+    Ok(())
+}
+
+pub fn watershed(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+    let bgr = if img.color { helper::slint_to_rgb(&img.img)? } else { return Err("Needs color image".into()); };
+    
+    let mut gray = Mat::default();
+    imgproc::cvt_color(&bgr, &mut gray, imgproc::COLOR_RGB2GRAY, 0, opencv::core::AlgorithmHint::ALGO_HINT_DEFAULT).map_err(|e| e.to_string())?;
+    
+    let mut thresh = Mat::default();
+    imgproc::threshold(&gray, &mut thresh, 0.0, 255.0, imgproc::THRESH_BINARY_INV | imgproc::THRESH_OTSU).map_err(|e| e.to_string())?;
+    
+    imgproc::morphology_default_border_value().unwrap();
+    let element = imgproc::get_structuring_element(imgproc::MORPH_RECT, opencv::core::Size::new(3, 3), opencv::core::Point::new(-1, -1)).map_err(|e| e.to_string())?;
+    
+    let mut bg = Mat::default();
+    imgproc::dilate(&thresh, &mut bg, &element, opencv::core::Point::new(-1,-1), 3, opencv::core::BORDER_CONSTANT, imgproc::morphology_default_border_value().unwrap()).map_err(|e| e.to_string())?;
+    
+    let mut dist = Mat::default();
+    imgproc::distance_transform(&thresh, &mut dist, imgproc::DIST_L2, 3, opencv::core::CV_32F).map_err(|e| e.to_string())?;
+    
+    let mut fg = Mat::default();
+    imgproc::threshold(&dist, &mut fg, 0.7 * 255.0, 255.0, imgproc::THRESH_BINARY).map_err(|e| e.to_string())?;
+    
+    let mut fg_8u = Mat::default();
+    fg.convert_to(&mut fg_8u, opencv::core::CV_8U, 1.0, 0.0).map_err(|e| e.to_string())?;
+    
+    let mut unknown = Mat::default();
+    opencv::core::subtract(&bg, &fg_8u, &mut unknown, &opencv::core::no_array(), -1).map_err(|e| e.to_string())?;
+    
+    let mut markers = Mat::default();
+    imgproc::connected_components(&fg_8u, &mut markers, 8, opencv::core::CV_32S).map_err(|e| e.to_string())?;
+    
+    let mut markers_plus = Mat::default();
+    opencv::core::add(&markers, &opencv::core::Scalar::all(1.0), &mut markers_plus, &opencv::core::no_array(), -1).map_err(|e| e.to_string())?;
+    
+    let mut markers_final = markers_plus.clone();
+    
+    let color_img = bgr.clone();
+    imgproc::watershed(&color_img, &mut markers_final).map_err(|e| e.to_string())?;
+    
+    img.img = helper::rgb_to_slint(&color_img)?;
+    images_model.set_row_data(selected_idx, img);
+    Ok(())
+}
+
+pub fn inpaint(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+    radius: i32,
+    method: i32,
+    mask_idx: i32,
+) -> Result<(), String> {
+    let (_, selected_idx, mut img) = helper::get_current_image(ui_handle, images_model)?;
+    if mask_idx < 0 || mask_idx as usize >= images_model.row_count() { return Err("Invalid mask".into()); }
+    
+    let src = if img.color { helper::slint_to_rgb(&img.img)? } else { helper::slint_to_gray(&img.img)? };
+    let mask_img = images_model.row_data(mask_idx as usize).unwrap();
+    let mask = helper::slint_to_gray(&mask_img.img)?;
+    
+    let inpaint_algo = if method == 0 { opencv::photo::INPAINT_NS } else { opencv::photo::INPAINT_TELEA };
+    
+    let mut result = Mat::default();
+    opencv::photo::inpaint(&src, &mask, &mut result, radius as f64, inpaint_algo).map_err(|e| e.to_string())?;
+    
+    img.img = if img.color { helper::rgb_to_slint(&result)? } else { helper::gray_to_slint(&result)? };
+    images_model.set_row_data(selected_idx, img);
+    Ok(())
+}
+
+pub fn rle_compress(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) -> Result<(), String> {
+    let (ui, _, img) = helper::get_current_image(ui_handle, images_model)?;
+    let buffer = if let Some(buf) = img.img.to_rgb8() {
+        buf.as_slice().iter().map(|p| p.r).collect::<Vec<u8>>()
+    } else {
+        return Err("Could not read image buffer".into());
+    };
+    
+    let original_size = buffer.len();
+    let mut compressed_size = 0;
+    
+    let mut i = 0;
+    while i < buffer.len() {
+        let val = buffer[i];
+        let mut count = 1;
+        while i + count < buffer.len() && buffer[i + count] == val && count < 255 {
+            count += 1;
+        }
+        compressed_size += 2; // store value + count
+        i += count;
+    }
+    
+    let ratio = original_size as f64 / compressed_size as f64;
+    let msg = format!("Original Size: {} bytes\nCompressed Size: {} bytes\nRLE Ratio: {:.2}:1", original_size, compressed_size, ratio);
+    
+    ui.global::<TextOutputState>().set_text(SharedString::from(msg));
+    Ok(())
+}
+
+pub fn analyze_objects(
+    ui_handle: &Weak<MainWindow>,
+    images_model: &Rc<VecModel<ImageContainer>>,
+) -> Result<(), String> {
+    let (ui, _, img) = helper::get_current_image(ui_handle, images_model)?;
+    let mat = helper::slint_to_gray(&img.img)?;
+    
+    let mut binary = Mat::default();
+    imgproc::threshold(&mat, &mut binary, 128.0, 255.0, imgproc::THRESH_BINARY).map_err(|e| e.to_string())?;
+    
+    let mut contours = opencv::core::Vector::<opencv::core::Vector<opencv::core::Point>>::new();
+    imgproc::find_contours(&binary, &mut contours, imgproc::RETR_EXTERNAL, imgproc::CHAIN_APPROX_SIMPLE, opencv::core::Point::new(0, 0)).map_err(|e| e.to_string())?;
+    
+    let mut output = String::from("Found Objects: \n\n");
+    for (i, contour) in contours.iter().enumerate() {
+        let area = imgproc::contour_area(&contour, false).map_err(|e| e.to_string())?;
+        let perimeter = imgproc::arc_length(&contour, true).map_err(|e| e.to_string())?;
+        let _moments = imgproc::moments(&contour, false).map_err(|e| e.to_string())?;
+        let rect = imgproc::bounding_rect(&contour).map_err(|e| e.to_string())?;
+        
+        let aspect_ratio = rect.width as f64 / rect.height as f64;
+        let extent = area / (rect.width * rect.height) as f64;
+        let eq_diameter = (4.0 * area / std::f64::consts::PI).sqrt();
+        
+        output.push_str(&format!("Object #{}\n", i + 1));
+        output.push_str(&format!("- Area: {:.2}\n", area));
+        output.push_str(&format!("- Perimeter: {:.2}\n", perimeter));
+        output.push_str(&format!("- Aspect Ratio: {:.2}\n", aspect_ratio));
+        output.push_str(&format!("- Extent: {:.2}\n", extent));
+        output.push_str(&format!("- Eq Diameter: {:.2}\n\n", eq_diameter));
+    }
+    
+    ui.global::<TextOutputState>().set_text(SharedString::from(output));
     Ok(())
 }
